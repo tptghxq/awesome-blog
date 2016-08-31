@@ -12,7 +12,7 @@ import markdown2
 from aiohttp import web
 
 from coroweb import get, post
-from apis import Page, APIValueError, APIResourceNotFoundError
+from apis import Page, APIValueError,APIPermissionError,APIResourceNotFoundError,APIError
 
 from models import User, Comment, Blog, next_id
 from config import configs
@@ -22,7 +22,7 @@ _COOKIE_KEY = configs.session.secret
 
 def check_admin(request):
     if request.__user__ is None or not request.__user__.admin:
-        raise APIPermissionError()
+        raise APIPermissionError('no Permission')
 
 def get_page_index(page_str):
     p = 1
@@ -148,7 +148,7 @@ def signout(request):
     logging.info('user signed out.')
     return r
 
-@get('/manage/')
+@get('/manage')
 def manage():
     return 'redirect:/manage/comments'
 
@@ -167,7 +167,9 @@ def manage_blogs(*, page='1'):
     }
 
 @get('/manage/blogs/create')
-def manage_create_blog():
+def manage_create_blog(request):
+    if request.__user__ is None:
+        raise APIPermissionError('please login in')
     return {
         '__template__': 'manage_blog_edit.html',
         'id': '',
@@ -246,8 +248,11 @@ def api_register_user(*, email, name, passwd):
     if not passwd or not _RE_SHA1.match(passwd):
         raise APIValueError('passwd')
     users = yield from User.findAll('email=?', [email])
+    users2 = yield from User.findAll('name=?', [name])
     if len(users) > 0:
         raise APIError('register:failed', 'email', 'Email is already in use.')
+    if len(users2) > 0:
+        raise APIError('register:failed', 'name', 'name is already in use.')
     uid = next_id()
     sha1_passwd = '%s:%s' % (uid, passwd)
     user = User(id=uid, name=name.strip(), email=email, passwd=hashlib.sha1(sha1_passwd.encode('utf-8')).hexdigest(), image='http://www.gravatar.com/avatar/%s?d=mm&s=120' % hashlib.md5(email.encode('utf-8')).hexdigest())
@@ -277,36 +282,43 @@ def api_get_blog(*, id):
 
 @post('/api/blogs')
 def api_create_blog(request, *, name, summary, content):
-    check_admin(request)
     if not name or not name.strip():
         raise APIValueError('name', 'name cannot be empty.')
     if not summary or not summary.strip():
         raise APIValueError('summary', 'summary cannot be empty.')
     if not content or not content.strip():
         raise APIValueError('content', 'content cannot be empty.')
+    if request.__user__ is None:
+        raise APIPermissionError('please login in')
     blog = Blog(user_id=request.__user__.id, user_name=request.__user__.name, user_image=request.__user__.image, name=name.strip(), summary=summary.strip(), content=content.strip())
     yield from blog.save()
     return blog
 
 @post('/api/blogs/{id}')
 def api_update_blog(id, request, *, name, summary, content):
-    check_admin(request)
     blog = yield from Blog.find(id)
-    if not name or not name.strip():
-        raise APIValueError('name', 'name cannot be empty.')
-    if not summary or not summary.strip():
-        raise APIValueError('summary', 'summary cannot be empty.')
-    if not content or not content.strip():
-        raise APIValueError('content', 'content cannot be empty.')
-    blog.name = name.strip()
-    blog.summary = summary.strip()
-    blog.content = content.strip()
-    yield from blog.update()
-    return blog
+    if request.__user__.admin or request.__user__.id == blog.user_id :
+        if not name or not name.strip():
+            raise APIValueError('name', 'name cannot be empty.')
+        if not summary or not summary.strip():
+            raise APIValueError('summary', 'summary cannot be empty.')
+        if not content or not content.strip():
+            raise APIValueError('content', 'content cannot be empty.')
+        blog.name = name.strip()
+        blog.summary = summary.strip()
+        blog.content = content.strip()
+        blog.update_at = time.time()
+        yield from blog.update()
+        return blog
+    else:
+        raise APIPermissionError('you have not permission')
 
 @post('/api/blogs/{id}/delete')
 def api_delete_blog(request, *, id):
-    check_admin(request)
     blog = yield from Blog.find(id)
-    yield from blog.remove()
-    return dict(id=id)
+    if blog is None:
+        raise APIResourceNotFoundError('blog')
+    if request.__user__.admin or blog.user_id==request.__user__.id:
+        blog.table=blog.__table__
+        yield from blog.remove()
+        return dict(id=id)

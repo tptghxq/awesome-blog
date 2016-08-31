@@ -36,6 +36,7 @@ class Blog(Model):
     summary = StringField(ddl='varchar(200)')
     content = TextField()
     created_at = FloatField(default=time.time)
+    update_at = FloatField()
 
 class Comment(Model):
     __table__ = 'comments'
@@ -47,3 +48,4 @@ class Comment(Model):
     user_image = StringField(ddl='varchar(500)')
     content = TextField()
     created_at = FloatField(default=time.time)
+    update_at = FloatField()

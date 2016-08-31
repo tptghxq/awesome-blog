@@ -34,7 +34,11 @@ $(function () {
     <div class="uk-width-medium-3-4">
         <article class="uk-article">
             <h2>{{ blog.name }}</h2>
-            <p class="uk-article-meta">发表于{{ blog.created_at|datetime }}</p>
+            <p class="uk-article-meta">发表于{{ blog.created_at|datetime }}
+                {% if blog.update_at %}
+                    <span>  更新于{{ blog.update_at|datetime }}</span>
+                {% endif %}
+            </p>
             <p>{{ blog.html_content|safe }}</p>
         </article>
 
