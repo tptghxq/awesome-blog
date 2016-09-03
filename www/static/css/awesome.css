@@ -1,6 +1,10 @@
 /*
  * custom css
  */
+body {
+	font-family: "lucida grande", "lucida sans unicode", lucida, helvetica, "Hiragino Sans GB", "Microsoft YaHei", "WenQuanYi Micro Hei", sans-serif;
+	font-size: 12px;
+}
 a:hover, a:active {
     text-decoration: none;
 }
@@ -14,4 +18,7 @@ a:hover, a:active {
 #error {
     display: none;
     margin-bottom: 15px;
+}
+a.disabled,button.disabled {
+    pointer-events: none;
 }

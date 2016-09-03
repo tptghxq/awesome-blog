@@ -1,0 +1,78 @@
+{% extends '__base__.html' %}
+
+{% block title %}{{user.name}}的博客{% endblock %}
+
+{% block beforehead %}
+
+<script>
+$(function () {
+    $('#vm').show();
+var vm  = new Vue({
+      el:'#vm',
+      data:{
+        message:''
+      },
+      ready: function(){
+                this.followuser('check');
+        },
+      methods:{
+        
+        followuser: function(str){
+            if ('{{ user.id }}' != '{{ __user__.id }}') {
+                var $focusButton =$('#focusButton');
+                    $focusButton.addClass('disabled');
+                var $vm = $('#vm');
+                that=this;
+                postJSON('/api/follow',{
+                    ownerid:'{{ user.id }}' ,
+                    state:str
+                },function(err,r){
+                    if (!err) {
+                            // alert(r.message);
+                            that.message=r.message;
+                            $focusButton.removeClass('disabled');
+                    }
+                })
+            }
+        }
+      }
+});
+});
+</script>
+
+{% endblock %}
+
+{% block content %}
+<div class="uk-width-medium-3-4">
+<div class="uk-article-title">
+			<ul class="uk-breadcrumb">
+                <li class="title">文章列表</li>
+            </ul> 
+</div>
+    <hr class="uk-article-divider">
+    {% for blog in blogs %}
+        <article class="uk-article">
+            <h2>
+            	<a href="/blog/{{ blog.id }}">
+            		{{ blog.name }}
+            	</a>
+            </h2>
+            <div>
+            	<span>{{ blog.created_at|datetime }}</span>
+            	<span>  阅读</span>
+            	<span>  喜欢</span>
+            </div>
+        </article>
+        <hr class="uk-article-divider">
+    {% endfor %}
+    {{ pagination('/?page=', page) }}
+</div>
+
+<div class="uk-width-medium-1-4" id="vm">
+        <div class="uk-text-center">
+            <img class="uk-border-circle" width="120" height="120" src="{{ user.image }}">
+            <h3>{{ user.name }}</h3>
+            <button v-on="click: followuser('change')" v-if="{{__user__}} && '{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" v-class="message?'uk-button':'uk-button-primary'">关注</botton>
+        </div>
+</div>
+{% endblock %}

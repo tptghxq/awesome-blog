@@ -34,7 +34,7 @@ $(function () {
     <div class="uk-width-medium-3-4">
         <article class="uk-article">
             <h2>{{ blog.name }}</h2>
-            <p class="uk-article-meta">发表于{{ blog.created_at|datetime }}
+            <a href="/user/{{blog.user_name}} ">{{ blog.user_name }}    </a><span>{{ blog.created_at|datetime }}<span>
                 {% if blog.update_at %}
                     <span>  更新于{{ blog.update_at|datetime }}</span>
                 {% endif %}
@@ -72,7 +72,7 @@ $(function () {
 
         <ul class="uk-comment-list">
             {% for comment in comments %}
-            <li>
+            <li><a name="{{comment.id}}">
                 <article class="uk-comment">
                     <header class="uk-comment-header">
                         <img class="uk-comment-avatar uk-border-circle" width="50" height="50" src="{{ comment.user_image }}">
@@ -80,9 +80,10 @@ $(function () {
                         <p class="uk-comment-meta">{{ comment.created_at|datetime }}</p>
                     </header>
                     <div class="uk-comment-body">
-                        {{ comment.html_content|safe }}
+                        {{ comment.html_content|safe }}<a href="javascript(void);">删除</a>
                     </div>
                 </article>
+                <a>
             </li>
             {% else %}
             <p>还没有人评论...</p>
@@ -92,20 +93,7 @@ $(function () {
     </div>
 
     <div class="uk-width-medium-1-4">
-        <div class="uk-panel uk-panel-box">
-            <div class="uk-text-center">
-                <img class="uk-border-circle" width="120" height="120" src="{{ blog.user_image }}">
-                <h3>{{ blog.user_name }}</h3>
-            </div>
-        </div>
-        <div class="uk-panel uk-panel-header">
-            <h3 class="uk-panel-title">友情链接</h3>
-            <ul class="uk-list uk-list-line">
-                <li><i class="uk-icon-link"></i> <a href="#">编程</a></li>
-                <li><i class="uk-icon-link"></i> <a href="#">思考</a></li>
-                <li><i class="uk-icon-link"></i> <a href="#">读书</a></li>
-            </ul>
-        </div>
+        
     </div>
 
 {% endblock %}

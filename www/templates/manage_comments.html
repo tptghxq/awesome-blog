@@ -81,7 +81,7 @@ $(function() {
                         <span v-text="comment.user_name"></span>
                     </td>
                     <td>
-                        <span v-text="comment.content"></span>
+                        <a v-attr="href: '/blog/'+comment.blog_id+'#'+comment.id" v-text="comment.content"></a>
                     </td>
                     <td>
                         <span v-text="comment.created_at.toDateTime()"></span>

@@ -49,3 +49,28 @@ class Comment(Model):
     content = TextField()
     created_at = FloatField(default=time.time)
     update_at = FloatField()
+
+class Follow(Model):
+    __table__ = 'follows'
+
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    from_user_id = StringField(ddl='varchar(50)')
+    to_user_id = StringField(ddl='varchar(50)')
+    created_at = FloatField(default=time.time)
+
+class Appreciate(Model):
+    __table__ = 'appreciates'
+
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    user_id = StringField(ddl='varchar(50)')
+    blog_id = StringField(ddl='varchar(50)')
+    created_at = FloatField(default=time.time)
+
+class Conversation(Model):
+    __table__ = 'conversations'
+
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    from_user_id = StringField(ddl='varchar(50)')
+    to_user_id = StringField(ddl='varchar(50)')
+    content = TextField()
+    created_at = FloatField(default=time.time)

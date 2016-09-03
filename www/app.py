@@ -20,7 +20,7 @@ from config import configs
 import orm
 from coroweb import add_routes, add_static
 
-from handlers import cookie2user, COOKIE_NAME
+from handlers import cookie2user, COOKIE_NAME,no_cache
 
 def init_jinja2(app, **kw):
     logging.info('init jinja2...')
@@ -64,7 +64,7 @@ def auth_factory(app, handler):
             if user:
                 logging.info('set current user: %s' % user.email)
                 request.__user__ = user
-        if request.path.startswith('/manage/') and (request.__user__ is None):
+        if (request.path.startswith('/manage') or request.path.startswith('/setting')) and (request.__user__ is None):
             return web.HTTPFound('/signin')
         return (yield from handler(request))
     return auth
@@ -105,19 +105,23 @@ def response_factory(app, handler):
             template = r.get('__template__')
             if template is None:
                 resp = web.Response(body=json.dumps(r, ensure_ascii=False, default=lambda o: o.__dict__).encode('utf-8'))
-                resp.content_type = 'application/json;charset=utf-8'
+                resp.content_type = 'application/json;charset=utf-8'             
                 return resp
             else:
                 r['__user__'] = request.__user__
-                resp = web.Response(body=app['__templating__'].get_template(template).render(**r).encode('utf-8'))
+                headers={'Cache-Control':'no-cache,no-store,private','Pragma':'no-cache'}
+                resp = web.Response(body=app['__templating__'].get_template(template).render(**r).encode('utf-8'),headers=headers)
                 resp.content_type = 'text/html;charset=utf-8'
+                resp.Expires=0                
                 return resp
         if isinstance(r, int) and t >= 100 and t < 600:
-            return web.Response(t)
+            resp = web.Response(t)
+            return resp
         if isinstance(r, tuple) and len(r) == 2:
             t, m = r
             if isinstance(t, int) and t >= 100 and t < 600:
-                return web.Response(t, str(m))
+                resp = web.Response(t, str(m))
+                return resp
         # default:
         resp = web.Response(body=str(r).encode('utf-8'))
         resp.content_type = 'text/plain;charset=utf-8'
@@ -146,8 +150,9 @@ def init(loop):
     init_jinja2(app, filters=dict(datetime=datetime_filter))
     add_routes(app, 'handlers')
     add_static(app)
-    srv = yield from loop.create_server(app.make_handler(), '127.0.0.1', 9000)
-    logging.info('server started at http://127.0.0.1:9000...')
+    duan='2005'
+    srv = yield from loop.create_server(app.make_handler(), '127.0.0.1', duan)
+    logging.info('server started at http://127.0.0.1:'+duan)
     return srv
 
 loop = asyncio.get_event_loop()

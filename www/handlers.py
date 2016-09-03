@@ -14,15 +14,39 @@ from aiohttp import web
 from coroweb import get, post
 from apis import Page, APIValueError,APIPermissionError,APIResourceNotFoundError,APIError
 
-from models import User, Comment, Blog, next_id
+from models import User, Comment, Blog, Follow,Appreciate,Conversation,next_id
 from config import configs
 
 COOKIE_NAME = 'awesession'
 _COOKIE_KEY = configs.session.secret
 
+def no_cache(resp):
+    headers={'Cache-Control':'no-cache','Pragma':'no-cache'}
+    resp.headers=headers
+    resp.Expires=0
+    return resp
+    
 def check_admin(request):
     if request.__user__ is None or not request.__user__.admin:
         raise APIPermissionError('no Permission')
+
+def check_passwd(email,passwd):
+    if not email:
+        raise APIValueError('email', 'Invalid email.')
+    if not passwd:
+        raise APIValueError('passwd', 'please input password.')
+    users = yield from User.findAll('email=?', [email])
+    if len(users) == 0:
+        raise APIValueError('email', 'Email not exist.')
+    user = users[0]
+    # check passwd:
+    sha1 = hashlib.sha1()
+    sha1.update(user.id.encode('utf-8'))
+    sha1.update(b':')
+    sha1.update(passwd.encode('utf-8'))
+    if user.passwd != sha1.hexdigest():
+        raise APIValueError('passwd', 'password is fault.')
+    return user
 
 def get_page_index(page_str):
     p = 1
@@ -89,6 +113,26 @@ def index(*, page='1'):
         'page': page,
         'blogs': blogs
     }
+@get('/user/{name}')
+def user(name,*,page='1'):
+    user = yield from User.find(name,'name')
+    if user is None:
+        raise APIValueError('404')
+    page_index = get_page_index(page)
+    num = yield from Blog.findNumber('count(id)','user_name=?',name)
+    page = Page(num)
+    if num == 0:
+        blogs = []
+    else:
+        blogs = yield from Blog.findAll('user_name=?',[name],orderBy='created_at desc', limit=(page.offset, page.limit))
+    
+    return {
+        '__template__': 'user.html',
+        'page': page,
+        'blogs': blogs,
+        'user':user
+    }
+
 
 @get('/blog/{id}')
 def get_blog(id):
@@ -115,23 +159,37 @@ def signin():
         '__template__': 'signin.html'
     }
 
+@get('/setting')
+def change():
+    return {
+        '__template__': 'setting.html'
+    }
+
+@post('/api/follow')
+def follow(request,*,ownerid,state):
+    fromid=request.__user__.id
+    if fromid is None:
+        raise APIPermissionError("请登录后关注")
+    num = yield from Follow.findNumber('count(id)','from_user_id=\''+fromid+'\' and to_user_id=?',ownerid)
+    if state == 'check':
+        if num is None:
+            num=0
+        else:
+            num=1
+        return dict(message=num)
+    
+    if num:
+        follow=yield from Follow.find(fromid,'from_user_id',ownerid,'to_user_id')
+        yield from follow.remove()
+        return dict(message=0)
+    else:
+        follow=Follow(from_user_id=fromid,to_user_id=ownerid)
+        yield from follow.save()
+        return dict(message=1)
+
 @post('/api/authenticate')
 def authenticate(*, email, passwd):
-    if not email:
-        raise APIValueError('email', 'Invalid email.')
-    if not passwd:
-        raise APIValueError('passwd', 'Invalid password.')
-    users = yield from User.findAll('email=?', [email])
-    if len(users) == 0:
-        raise APIValueError('email', 'Email not exist.')
-    user = users[0]
-    # check passwd:
-    sha1 = hashlib.sha1()
-    sha1.update(user.id.encode('utf-8'))
-    sha1.update(b':')
-    sha1.update(passwd.encode('utf-8'))
-    if user.passwd != sha1.hexdigest():
-        raise APIValueError('passwd', 'Invalid password.')
+    user = yield from check_passwd(email,passwd)
     # authenticate ok, set cookie:
     r = web.Response()
     r.set_cookie(COOKIE_NAME, user2cookie(user, 86400), max_age=86400, httponly=True)
@@ -139,6 +197,17 @@ def authenticate(*, email, passwd):
     r.content_type = 'application/json'
     r.body = json.dumps(user, ensure_ascii=False).encode('utf-8')
     return r
+
+@post('/api/setting/password')
+def change_password(*, email, passwd,newPassword):
+    user = yield from check_passwd(email,passwd)
+    sha1 = hashlib.sha1()
+    sha1.update(user.id.encode('utf-8'))
+    sha1.update(b':')
+    sha1.update(newPassword.encode('utf-8'))
+    user.passwd=sha1.hexdigest()
+    yield from user.update()
+    return dict(message='sussess')
 
 @get('/signout')
 def signout(request):
@@ -152,24 +221,17 @@ def signout(request):
 def manage():
     return 'redirect:/manage/comments'
 
-@get('/manage/comments')
-def manage_comments(*, page='1'):
+@get('/manage/{items}')
+def manage_comments(items,*, page='1'):
+    if items!='blogs' and items!='users' and items!='comments':
+        raise APIValueError('404')
     return {
-        '__template__': 'manage_comments.html',
-        'page_index': get_page_index(page)
-    }
-
-@get('/manage/blogs')
-def manage_blogs(*, page='1'):
-    return {
-        '__template__': 'manage_blogs.html',
+        '__template__': 'manage_items.html',
         'page_index': get_page_index(page)
     }
 
 @get('/manage/blogs/create')
 def manage_create_blog(request):
-    if request.__user__ is None:
-        raise APIPermissionError('please login in')
     return {
         '__template__': 'manage_blog_edit.html',
         'id': '',
@@ -183,23 +245,6 @@ def manage_edit_blog(*, id):
         'id': id,
         'action': '/api/blogs/%s' % id
     }
-
-@get('/manage/users')
-def manage_users(*, page='1'):
-    return {
-        '__template__': 'manage_users.html',
-        'page_index': get_page_index(page)
-    }
-
-@get('/api/comments')
-def api_comments(*, page='1'):
-    page_index = get_page_index(page)
-    num = yield from Comment.findNumber('count(id)')
-    p = Page(num, page_index)
-    if num == 0:
-        return dict(page=p, comments=())
-    comments = yield from Comment.findAll(orderBy='created_at desc', limit=(p.offset, p.limit))
-    return dict(page=p, comments=comments)
 
 @post('/api/blogs/{id}/comments')
 def api_create_comment(id, request, *, content):
@@ -217,29 +262,48 @@ def api_create_comment(id, request, *, content):
 
 @post('/api/comments/{id}/delete')
 def api_delete_comments(id, request):
-    check_admin(request)
     c = yield from Comment.find(id)
     if c is None:
         raise APIResourceNotFoundError('Comment')
-    yield from c.remove()
-    return dict(id=id)
+    if request.__user__.admin or c.user_id==request.__user__.id:
+        yield from c.remove()
+        return dict(message='delete id finished')
 
-@get('/api/users')
-def api_get_users(*, page='1'):
+@post('/api/users/{id}/delete')
+def api_delete_users(id, request):
+    c = yield from User.find(id)
+    if c is None:
+        raise APIResourceNotFoundError('Comment')
+    if request.__user__.admin:
+        yield from c.remove()
+        return dict(message='delete id finished')
+
+
+@get('/api/{tablename}')
+def api_items(tablename,*, page='1'):
+    logging.info('testtesttesttest')
+    selects={'users':User,'comments':Comment,'blogs':Blog}
+    item=selects.get(tablename,None)
+    if item is None:
+        raise APIValueError('404')
     page_index = get_page_index(page)
-    num = yield from User.findNumber('count(id)')
+    num = yield from item.findNumber('count(id)')
     p = Page(num, page_index)
     if num == 0:
-        return dict(page=p, users=())
-    users = yield from User.findAll(orderBy='created_at desc', limit=(p.offset, p.limit))
-    for u in users:
-        u.passwd = '******'
-    return dict(page=p, users=users)
+        return dict(page=p, items=())
+    items = yield from item.findAll(orderBy='created_at desc', limit=(p.offset, p.limit))
+    
+    for item in items:
+        item.password="******"
+        if item==Comment:
+            if len(item.content)>20:
+                item.content=item.content[:20]+'   ···'
+    return dict(page=p, items=items)
 
 _RE_EMAIL = re.compile(r'^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$')
 _RE_SHA1 = re.compile(r'^[0-9a-f]{40}$')
 
-@post('/api/users')
+@post('/api/register')
 def api_register_user(*, email, name, passwd):
     if not name or not name.strip():
         raise APIValueError('name')
@@ -264,16 +328,6 @@ def api_register_user(*, email, name, passwd):
     r.content_type = 'application/json'
     r.body = json.dumps(user, ensure_ascii=False).encode('utf-8')
     return r
-
-@get('/api/blogs')
-def api_blogs(*, page='1'):
-    page_index = get_page_index(page)
-    num = yield from Blog.findNumber('count(id)')
-    p = Page(num, page_index)
-    if num == 0:
-        return dict(page=p, blogs=())
-    blogs = yield from Blog.findAll(orderBy='created_at desc', limit=(p.offset, p.limit))
-    return dict(page=p, blogs=blogs)
 
 @get('/api/blogs/{id}')
 def api_get_blog(*, id):
@@ -318,7 +372,11 @@ def api_delete_blog(request, *, id):
     blog = yield from Blog.find(id)
     if blog is None:
         raise APIResourceNotFoundError('blog')
-    if request.__user__.admin or blog.user_id==request.__user__.id:
-        blog.table=blog.__table__
-        yield from blog.remove()
-        return dict(id=id)
+    if not request.__user__.admin and blog.user_id!=request.__user__.id:
+        raise APIPermissionError('no Permission')
+    yield from blog.remove()
+    comments = yield from Comment.findAll('blog_id=?', [id], orderBy='created_at desc')
+    if len(comments) != 0:
+        for comment in comments:
+            yield from comment.remove()
+    return dict(id=id)

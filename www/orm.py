@@ -141,8 +141,8 @@ class ModelMetaclass(type):
 
 class Model(dict, metaclass=ModelMetaclass):
 
-    def __init__(self, **kw):
-        super(Model, self).__init__(**kw)
+    def __init__(self,**kw):
+        super(Model, self).__init__(**kw,table=self.__table__)
 
     def __getattr__(self, key):
         try:
@@ -209,9 +209,12 @@ class Model(dict, metaclass=ModelMetaclass):
 
     @classmethod
     @asyncio.coroutine
-    def find(cls, pk):
-        ' find object by primary key. '
-        rs = yield from select('%s where `%s`=?' % (cls.__select__, cls.__primary_key__), [pk], 1)
+    def find(cls,args,factor1=None,args2=None,factor2=None):
+        ' find object by factor. '
+        if factor1==None:
+            factor1=cls.__primary_key__
+        str =   '' if factor2==None else '`%s`=\'%s\' and' % (factor2,args2)
+        rs = yield from select('%s where %s `%s`=?' % (cls.__select__,str,factor1), args, 1)
         if len(rs) == 0:
             return None
         return cls(**rs[0])
