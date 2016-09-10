@@ -6,9 +6,9 @@
 
 <script>
 $(function() {
-    // if(!{{__user__}}){
-    //     window.location.replace('/');
-    // }
+     if('{{__user__}}'=='Nope'){
+         window.location.replace('/');
+     }
     $('#vm').show();
     var vm = new Vue({
         el: '#vm',
@@ -28,7 +28,8 @@ $(function() {
         },
         methods: {
             getPageCodes: function(page) {
-                console.log("test:"+page.page_index);
+                this.pageCodes=[];
+                this.pageCodes.push(page.page_index);
                 if(page.page_count-page.page_index<5){
                        var i= page.page_count-page.page_index;
                 }
@@ -44,19 +45,21 @@ $(function() {
                     }
                 var pageCode2=this.page.page_index;
                     for(;j>0;j--){
-                        pageCode--;
+                        pageCode2--;
                         this.pageCodes.unshift(pageCode2);                     
                     }
-
             },
             getItemsByPage: function(page_index) {
                     var that =this;
+                    // if(page_index==this.page.page_index){
+                    //     return
+                    // }
                     getJSON('/api/'+this.tablename, {
                         page: page_index
                     },function (err, results) {
                         $('#loading').hide();
                         if (err) {
-                            return fatal(err);
+                            showInfo(err);
                         }
                         that.items=results.items;
                         that.page=results.page;
@@ -68,17 +71,18 @@ $(function() {
             },
             delete_item: function (item,page) {
                 var that = this;
-                if (confirm('确认要删除“' + (item.name||item.content) +'”？删除后不可恢复！')) {
+                if (confirm('确认要删除 ' + (item.name||item.user_name+' 的这条评论') +'？删除后不可恢复！')) {
                     postJSON('/api/'+item.table+'/' + item.id + '/delete', function (err, r) {
                         if (err) {
-                            return error(err.message || err.error || err);
+                            showInfo(err);
                         }
                         else {
                             if (page.page_index==page.page_count && page.item_count % page.page_size==1 && page.item_count>page.page_size){
                                 that.getItemsByPage(page.page_index - 1);
                             }
                             else{
-                                that.getItemsByPage(page.page_index);
+                                // that.getItemsByPage(page.page_index);
+                                $('#'+item.id).remove();
                             }
                         }
                     });
@@ -93,27 +97,24 @@ $(function() {
 {% endblock %}
 
 {% block content %}
-<div class="uk-container uk-width-1-1 uk-margin-large-top" id="vm">
-    <div class="uk-width-1-1 uk-margin-bottom">
-            <div class="uk-tab-center">
-                <ul class="uk-tab">
-                    <li v-class="tablename=='comments'?'uk-active':''"><a v-class="tablename=='comments'?'disabled':''" href="/manage/comments">评论</a> </li>
-                    <li v-class="tablename=='blogs'?'uk-active':''"><a v-class="tablename=='blogs'?'disabled':''" href="/manage/blogs">日志</a></li>
-                    <li v-class="tablename=='users'?'uk-active':''"><a v-class="tablename=='users'?'disabled':''" href="/manage/users">用户</a></li>
+<div class="managecontainer" id="vm">
+
+            <div class="subnav">
+                <ul>
+                    <li><a v-class="tablename=='comments'?'active':''" href="/manage/comments">评论</a> </li>
+                    <li><a v-class="tablename=='blogs'?'active':''" href="/manage/blogs">日志</a></li>
+                    <li><a v-class="tablename=='users'?'active':''" href="/manage/users">用户</a></li>
                 </ul>                  
             </div>  
                            
-    </div>
-
-    <div id="error" class="uk-width-1-1">
-    </div>
 
 
 
-    <div class="uk-width-1-1">
-        <a v-if="{{__user__}}" href="/manage/blogs/create" class="uk-button uk-button-primary"><i class="uk-icon-plus"></i> 新日志</a>
 
-        <table class="uk-table uk-table-hover">
+
+        <a v-if="{{__user__}}" href="/manage/blogs/create" class="borderbutton"><i class="uk-icon-plus"></i> 新日志</a>
+
+        <table class="uk-table uk-table-hover optable">
             <thead>
                 <tr>
                     <th v-class="title=='邮箱'||'名字'||'作者'?'uk-width-2-10':'uk-width-4-10'" v-repeat="title : models[tablename]" v-text="title"></th>
@@ -122,10 +123,10 @@ $(function() {
                 </tr>
             </thead>
     <div id="loading" class="uk-width-1-1 uk-text-center">
-        <i class="uk-icon-spinner uk-icon-medium uk-icon-spin">正在加载</i>
+        <i class="uk-icon-spinner uk-icon-medium uk-icon-spin"></i>
     </div>            
-            <tbody>
-                <tr v-repeat="item: items" >
+            <tbody class="itemsbox">
+                <tr v-attr="id:item.id" v-repeat="item: items" >
                     <td v-if="tablename=='blogs'" >
                         <a target="_blank" v-attr="href: '/'+tablename.slice(0,-1)+'/'+item.id" v-text="item.name"></a>
                     </td>
@@ -135,7 +136,7 @@ $(function() {
                     <td v-if="tablename =='users'" v-text='item.email'>
                     </td>
                     <td v-if="tablename=='comments'">
-                        <a target="_blank"  v-attr="href: '/blog/'+item.blog_id+'#'+item.id" v-text="item.content"></a>
+                        <a target="_blank"  v-attr="href: '/blog/'+item.blog_id+'#'+item.id" v-html="item.content"></a>
                     </td>                    
                     <td v-if="tablename!='users'">
                         <a target="_blank"  v-attr="href: '/user/'+item.user_name" v-text="item.user_name"></a>
@@ -144,15 +145,17 @@ $(function() {
                         <span v-text="item.created_at.toDateTime()"></span>
                     </td>
                     <td v-if="{{__user__}}.admin==1 || (table!='users' && item.user_id=={{__user__}}.id)">
-                        <a v-if="tablename=='blogs'" href="javascript:void(0);" v-on="click: edit_blog(item)"><i class="uk-icon-edit"></i>
-                        <a href="javascript:void(0);" v-on="click: delete_item(item,page)"><i class="uk-icon-trash-o"></i>
+                        <a v-if="tablename=='blogs'" href="javascript:void(0);" v-on="click: edit_blog(item)"><i class="uk-icon-edit blue"></i>
+                        <a href="javascript:void(0)" v-on="click: delete_item(item,page)"><i class="uk-icon-trash-o blue"></i>
                     </td>
                 </tr>
             </tbody>
         </table>
 
-        <div v-component="pagination" v-with="page"></div>
+        <ul class="pagination">
+            <li v-repeat="pageCode:pageCodes"><a v-class="pageCode==page.page_index?'active':''" href="javascript:void(0);" v-on="click:getItemsByPage(pageCode)" v-text="pageCode"></a></li>
+        </ul>
 
-    </div>
+
 </div>
 {% endblock %}

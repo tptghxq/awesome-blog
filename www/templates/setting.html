@@ -4,11 +4,114 @@
 
 {% block beforehead %}
 
+<script src="/static/js/upload.js"></script>
+
 <script>
 $(function () {
-	if(!{{__user__}}){
+var params = {
+    fileInput: $("#fileImage").get(0),
+    dragDrop: $(".upload_drag_area").get(0),
+    upButton: $("#fileSubmit").get(0),
+    url: $("#uploadForm").attr("action"),
+    filter: function(files) {
+        var arrFiles = [];
+        for (var i = 0, file; file = files[i]; i++) {
+            if (file.type.indexOf("image") == 0) {
+                if (file.size >= 512000) {
+                    alert('您这张"'+ file.name +'"图片大小过大，应小于500k');    
+                } else {
+                    arrFiles.push(file);    
+                }           
+            } else {
+                alert('文件"' + file.name + '"不是图片。');    
+            }
+        }
+        return arrFiles;
+    },
+    onSelect: function(files) {
+        var html = '', i = 0;
+        $(".upload_preview").html('<div class="upload_loading"></div>');
+        var funAppendImage = function() {
+            file = files[i];
+            if (file) {
+                var reader = new FileReader()
+                reader.onload = function(e) {
+                    html = html + '<div id="uploadList_'+ i +'" class="upload_append_list"><p>'+ 
+                        '<a href="javascript:" class="upload_delete" title="删除" data-index="'+ i +'">X</a><br />' +
+                        '<img id="uploadImage_' + i + '" src="' + e.target.result + '" class="upload_image" /></p>'+ 
+                        '<span id="uploadProgress_' + i + '" class="upload_progress"></span>' +
+                    '</div>';
+                    
+                    i++;
+                    funAppendImage();
+                }
+                reader.readAsDataURL(file);
+            } else {
+                $(".upload_preview").html(html);
+                if (html) {
+                    //删除方法
+                    $(".upload_delete").click(function() {
+                        ZXXFILE.funDeleteFile(files[parseInt($(this).attr("data-index"))]);
+                        return false;   
+                    });
+                    //提交按钮显示
+                    $("#fileSubmit").show();    
+                } else {
+                    //提交按钮隐藏
+                    $("#fileSubmit").hide();    
+                }
+            }
+        };
+        funAppendImage();       
+    },
+    onDelete: function(file) {
+        $("#uploadList_" + file.index).fadeOut();
+    },
+    onDragOver: function() {
+        $(this).addClass("upload_drag_hover");
+    },
+    onDragLeave: function() {
+        $(this).removeClass("upload_drag_hover");
+    },
+    onProgress: function(file, loaded, total) {
+        var eleProgress = $("#uploadProgress_" + file.index), percent = (loaded / total * 100).toFixed(2) + '%';
+        eleProgress.show().html(percent);
+    },
+    onSuccess: function(file, response) {
+        $("#uploadInf").append("<p>头像设置成功</p>");
+    },
+    onFailure: function(file) {
+        $("#uploadInf").append("<p>图片" + file.name + "上传失败！</p>");  
+        $("#uploadImage_" + file.index).css("opacity", 0.2);
+    },
+    onComplete: function() {
+        //提交按钮隐藏
+        $("#fileSubmit").hide();
+        //file控件value置空
+        $("#fileImage").val("");
+        // $("#uploadInf").append("<p>当前图片全部上传完毕，可继续添加上传。</p>");
+    }
+};
+ZXXFILE = $.extend(ZXXFILE, params);
+ZXXFILE.init();
+
+
+	if('{{__user__}}'=='Nope'){
         window.location.replace('/');
     }
+    var activeNav= new Vue({
+        el:'.setsubnav',data:{
+            state:1
+        },ready:function(){
+            this.change("#base");
+        },methods:{
+            change:function(s,n) {
+                        $(".setting").find('form').hide();
+                        $(s).show(); 
+                        this.state=n;         
+                }
+        }
+    });
 var pw = new Vue({
         el: '#pw',
         data: {
@@ -22,13 +125,13 @@ var pw = new Vue({
                 event.preventDefault();
                 var $form = $('#pw');
                 if (! this.oldPassword.trim()) {
-                    return $form.showFormError('请输入旧密码');
+                    return showInfo('请输入旧密码',1);
                 }
                 if (this.oldPassword.length<6 || this.newPassword1.length<6) {
-                	return $form.showFormError('密码必须大于6位');
+                	return showInfo('密码必须大于6位',1);
                 }
                 if (this.newPassword1 !== this.newPassword2) {
-                    return $form.showFormError('两次输入的口令不一致');
+                    return showInfo('两次输入的口令不一致',1);
                 }
 
                 $form.postJSON('/api/setting/password', 
@@ -38,84 +141,169 @@ var pw = new Vue({
                 	newPassword: CryptoJS.SHA1('{{__user__.email}}' + ':' + that.newPassword1).toString()
                 	}, 
                 	function (err, r) {
-                    if (err) {
-                        $form.showFormError(err);
+                    if (!err) {
+                        location.replace('/signout')
                     }
-                    else{
-                    	location.replace('/signout')
-                    }
-
                 });
             	}
         	}
-        })
+        });
+    var tx =new Vue({el:"#tx",data:{
+            tupian:''},methods:{submit:function(event){
+                 event.preventDefault();
+                 that=this;
+                 var $form=$("#tx");
+                 $form.postJSON('api/upload',{})
+            }
+
+            }});
+
     });
 
+var params = {
+    fileInput: $("#fileImage").get(0),
+    dragDrop: $(".upload_drag_area").get(0),
+    upButton: $("#fileSubmit").get(0),
+    url: $("#uploadForm").attr("action"),
+    filter: function(files) {
+        var arrFiles = [];
+        for (var i = 0, file; file = files[i]; i++) {
+            if (file.type.indexOf("image") == 0) {
+                if (file.size >= 512000) {
+                    alert('您这张"'+ file.name +'"图片大小过大，应小于500k');    
+                } else {
+                    arrFiles.push(file);    
+                }           
+            } else {
+                alert('文件"' + file.name + '"不是图片。');    
+            }
+        }
+        return arrFiles;
+    },
+    onSelect: function(files) {
+        var html = '', i = 0;
+        $(".upload_preview").html('<div class="upload_loading"></div>');
+        var funAppendImage = function() {
+            file = files[i];
+            if (file) {
+                var reader = new FileReader()
+                reader.onload = function(e) {
+                    html = html + '<div id="uploadList_'+ i +'" class="upload_append_list"><p><strong>' + file.name + '</strong>'+ 
+                        '<a href="javascript:" class="upload_delete" title="删除" data-index="'+ i +'">删除</a><br />' +
+                        '<img id="uploadImage_' + i + '" src="' + e.target.result + '" class="upload_image" /></p>'+ 
+                        '<span id="uploadProgress_' + i + '" class="upload_progress"></span>' +
+                    '</div>';
+                    
+                    i++;
+                    funAppendImage();
+                }
+                reader.readAsDataURL(file);
+            } else {
+                $(".upload_preview").html(html);
+                if (html) {
+                    //删除方法
+                    $(".upload_delete").click(function() {
+                        ZXXFILE.funDeleteFile(files[parseInt($(this).attr("data-index"))]);
+                        return false;   
+                    });
+                    //提交按钮显示
+                    $("#fileSubmit").show();    
+                } else {
+                    //提交按钮隐藏
+                    $("#fileSubmit").hide();    
+                }
+            }
+        };
+        funAppendImage();       
+    },
+    onDelete: function(file) {
+        $("#uploadList_" + file.index).fadeOut();
+    },
+    onDragOver: function() {
+        $(this).addClass("upload_drag_hover");
+    },
+    onDragLeave: function() {
+        $(this).removeClass("upload_drag_hover");
+    },
+    onProgress: function(file, loaded, total) {
+        var eleProgress = $("#uploadProgress_" + file.index), percent = (loaded / total * 100).toFixed(2) + '%';
+        eleProgress.show().html(percent);
+    },
+    onSuccess: function(file, response) {
+        $("#uploadInf").append("<p>头像设置成功</p>");
+    },
+    onFailure: function(file) {
+        $("#uploadInf").append("<p>图片" + file.name + "头像设置失败！</p>");  
+        $("#uploadImage_" + file.index).css("opacity", 0.2);
+    },
+    onComplete: function() {
+        //提交按钮隐藏
+        $("#fileSubmit").hide();
+        //file控件value置空
+        $("#fileImage").val("");
+        // $("#uploadInf").append("<p>当前图片全部上传完毕，可继续添加上传。</p>");
+    }
+};
+ZXXFILE = $.extend(ZXXFILE, params);
+ZXXFILE.init();
 </script>
 
 {% endblock %}
 
 {% block content %}
 
-		<h4>设置</h4>
-	<div class="uk-text-center uk-width-1-1">
-	<div class="uk-tab-center .uk-width-medium-*">
-		<ul class="uk-tab" data-uk-tab="{connect:'#set'}">
-    		<li class="uk-active"><a href="#base">基本设置</a></li>
-    		<li><a href="#pw">修改密码</a></li>
-    		<li><a href="">个人资料</a></li>
-    		<li class="uk-disabled"><a href="">...</a></li>
+	<div class="setting">
+	<div class="subnav setsubnav">
+		<ul>
+    		<li><a v-class="state==1?'active':''" v-on="click:change('#base',1)">基本设置</a></li>
+    		<li><a v-class="state==2?'active':''" v-on="click:change('#pw',2)">修改密码</a></li>
+            <li><a v-class="state==3?'active':''" v-on="click:change('#uploadForm',3)">上传头像</a></li>	
 		</ul>
     </div>
-    <div class=".uk-width-medium-*">
-        <ul id='set' class="uk-switcher">
-		<li class="uk-width-1-3 uk-container-center">
-		<form id="jb" v-on="submit: submit" class="uk-form uk-form-stacked">
-		<div class="uk-form-row">
-		<label class="uk-form-label uk-position-top-left">昵称: </label>
-                <div class="uk-form-controls">
-                    <input v-model="name" type="text" maxlength="16" value="{{__user__.name}}" class="uk-width-1-1">
-                </div>	
-        </div>
-		<div class="uk-form-row">
-		<label class="uk-form-label uk-position-top-left">邮箱: </label>
-                <div class="uk-form-controls">
-                    <input v-model="email" type="text" maxlength="16" value="{{__user__.email}}" class="uk-width-1-1">
+    <div>
+
+		<form id="base" v-on="submit: submit" class="formstyle1">
+                <div class="box">
+                    <input class="input1" v-model="name" type="text" maxlength="16" placeholder="{{__user__.name}}">
+                    <input class="input2" v-model="email" type="text" maxlength="16" placeholder="{{__user__.email}}">
         		</div>	
-        </div>	
-        <div class="uk-form-row">
-        <button type="submit" class="uk-button uk-button-primary">更改</button>	
+        <div class="box">
+        <button type="submit" class="blue_button">更改</button>	
         </div>  
         </form>       		
-		</li> 
-		<li class="uk-width-1-3 uk-container-center">
-	<form id="pw" v-on="submit: submit" class="uk-form uk-form-stacked  uk-container-center">
-        <div class="uk-alert uk-alert-danger uk-hidden"></div> 
-            <div class="uk-form-row">
-                <label class="uk-form-label">旧密码: </label>
-                <div class="uk-form-controls">
-                    <input v-model="oldPassword" type="password" maxlength="16" placeholder="旧密码" class="uk-width-1-1">
+	
+	<form id="pw" v-on="submit: submit" class="formstyle1" enctype="multipart/form-data">   
+                <div class="box">
+                    <input v-model="oldPassword" type="password" maxlength="16" placeholder="旧密码" class="input1">
+
+                	<input v-model="newPassword1" type="password" maxlength="16" placeholder="输入新密码" class="input1">	
+                    <input v-model="newPassword2" type="password" maxlength="16" placeholder="再次输入" class="input2">	
                 </div>
-            </div>
-            <div class="uk-form-row">
-                <label class="uk-form-label">新密码:</label>
-                <div class="uk-form-controls">
-                	<input v-model="newPassword1" type="password" maxlength="16" placeholder="输入新密码" class="uk-width-1-1">	
-                </div>
-            </div>
-            <div class="uk-form-row">
-                <label class="uk-form-label">再次输入:</label>
-                <div class="uk-form-controls">
-                    <input v-model="newPassword2" type="password" maxlength="16" placeholder="再次输入" class="uk-width-1-1">	
-                </div>
-            </div>
-            <div class="uk-form-row">
-                <button type="submit" class="uk-button uk-button-primary"><i class="uk-icon-save"></i> 修改</button>
-                <a href="/manage/blogs" class="uk-button"><i class="uk-icon-times"></i> 取消</a>
+            <div class="buttonbox">
+                <button class="button" type="submit">修改
+                </button>
+                <a href="/manage/blogs" class="whitebutton">取消</a>
             </div>
     </form>
-		</li> 
-		</ul>
+
+ <form id="uploadForm" action="/api/upload" method="post" enctype="multipart/form-data" accept-charset="utf-8">
+                    <div class="upload_box">
+                        <div class="upload_main">
+                            <div class="upload_choose">
+                                <input id="fileImage" accept="image/*" type="file" size="30" name="fileselect[]" multiple="">
+                                <div id="fileDragArea" class="upload_drag_area upload_preview">或者将图片拖到此处</div>
+                            <iframe id="tmp_downloadhelper_iframe" style="display: none;"></iframe>
+                            </div>
+                           
+                        </div>
+                        <div class="buttonbox">
+                          <label class="button button_primary" for="fileImage">选择文件</label>  
+                          <button class="button button_primary" type="button" id="fileSubmit">上传图片</button>   
+                        </div>
+                        <div id="uploadInf" class="upload_inf"></div>
+                    </div>
+                </form>   
+       
     </div>
 </div>
 {% endblock %}

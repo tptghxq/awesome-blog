@@ -1,6 +1,6 @@
 {% extends '__base__.html' %}
 
-{% block title %}编辑日志{% endblock %}
+{% block title %}写博文{% endblock %}
 
 {% block beforehead %}
 
@@ -9,18 +9,119 @@
 var
     ID = '{{ id }}',
     action = '{{ action }}';
-
+function handleHtml(html,str){
+    if(html.slice(-str.length)==str){
+        html=html.slice(0,-str.length);
+                }
+    return html;
+}
 function initVM(blog) {
     var vm = new Vue({
         el: '#vm',
-        data: blog,
+        data: {name:blog.name,summary:blog.summary,content:blog.content,image:blog.image,editor1:'',editor2:''},
+        ready:function(){
+            var editor1 = new wangEditor('edit1');
+            editor1.config.menuFixed = false;
+            editor1.config.menus = [
+        'source',
+        '|',
+        'bold',
+        'underline',
+        'italic',
+        'strikethrough',
+        'eraser',
+        'forecolor',
+        '|',
+        'quote',
+        'fontfamily',
+        'fontsize',
+        'head',
+        'unorderlist',
+        'orderlist',
+        'alignleft',
+        'aligncenter',
+        'alignright',
+        '|',
+        'link',
+        'unlink',
+        '|',
+        'img',
+        'insertcode'
+
+    ];
+    editor1.create();
+    this.editor1=editor1;
+    var editor2 = new wangEditor('edit2');
+    editor2.config.menuFixed = false;
+    editor2.config.uploadImgUrl = '/api/upload';
+    editor2.config.uploadImgFileName='blogPhoto';
+    editor2.config.menus = [
+        'source',
+        'lineheight',
+        'indent',
+        '|',
+        'bold',
+        'underline',
+        'italic',
+        'strikethrough',
+        'eraser',
+        'forecolor',
+        'bgcolor',
+        '|',
+        'quote',
+        'fontfamily',
+        'fontsize',
+        'head',
+        'unorderlist',
+        'orderlist',
+        'alignleft',
+        'aligncenter',
+        'alignright',
+        '|',
+        'link',
+        'unlink',
+        'table',
+        'emotion',
+        '|',
+        'img',
+        'video',
+        'location',
+        'insertcode',
+        '|',
+        'undo',
+        'redo',
+        'fullscreen'
+    ];
+    editor2.config.emotions={
+        'default':{
+            title:'默认',
+            data:'../../static/emotions/emotions.data'
+        }
+    }
+    editor2.create();
+    this.editor2=editor2;
+
+        },
         methods: {
             submit: function (event) {
                 event.preventDefault();
+                that=this;
+                
+                this.summary = handleHtml(this.editor1.$txt.html(),'<p><br></p>');
+                this.content = handleHtml(this.editor2.$txt.html(),'<p><br></p>');
+                imgs=this.editor2.$txt.find('img');
+                imgs.each(function(){
+                    if($(this).attr('alt')){
+                        that.image=$(this).attr('src');
+                        alert(that.image);
+                        return false;
+                    }
+                });
+
                 var $form = $('#vm').find('form');
-                $form.postJSON(action, this.$data, function (err, r) {
+                $form.postJSON(action, {name:that.name,summary:that.summary,content:that.content,image:that.image}, function (err, r) {
                     if (err) {
-                        $form.showFormError(err);
+                        showInfo(err);
                     }
                     else {
                         return location.assign('/blog/'+r.id);
@@ -36,7 +137,7 @@ $(function () {
     if (ID) {
         getJSON('/api/blogs/' + ID, function (err, blog) {
             if (err) {
-                return fatal(err);
+                showInfo(err);
             }
             $('#loading').hide();
             initVM(blog);
@@ -47,9 +148,11 @@ $(function () {
         initVM({
             name: '',
             summary: '',
-            content: ''
+            content: '',
+            image:''
         });
     }
+  
 });
 
 </script>
@@ -58,49 +161,34 @@ $(function () {
 
 {% block content %}
 
-    <div class="uk-width-1-1 uk-margin-bottom">
-        <div class="uk-panel uk-panel-box">
-            <ul class="uk-breadcrumb">
+<div id="vm" class="editcontainer">
+        <div class="subnav">
+            <ul>
                 <li><a href="/manage/comments">评论</a></li>
                 <li><a href="/manage/blogs">日志</a></li>
                 <li><a href="/manage/users">用户</a></li>
             </ul>
         </div>
-    </div>
 
-    <div id="error" class="uk-width-1-1">
-    </div>
 
-    <div id="loading" class="uk-width-1-1 uk-text-center">
+  
+
+        <form v-on="submit: submit" class="formstyle2">
+                <div id="loading" class="uk-width-1-1 uk-text-center">
         <span><i class="uk-icon-spinner uk-icon-medium uk-icon-spin"></i> 正在加载...</span>
     </div>
-
-    <div id="vm" class="uk-width-2-3">
-        <form v-on="submit: submit" class="uk-form uk-form-stacked">
-            <div class="uk-alert uk-alert-danger uk-hidden"></div>
-            <div class="uk-form-row">
-                <label class="uk-form-label">标题:</label>
-                <div class="uk-form-controls">
-                    <input v-model="name" name="name" type="text" maxlength='50' placeholder="最多输入50个字" class="uk-width-1-1">
+                <div class="box">
+                    <input v-model="name" name="name" type="text" maxlength='50' placeholder="标题" class="input12">
+                
+                    <textarea id="edit1" v-model="summary" rows="4" name="summary" maxlength='200' placeholder="摘要" class="input12"></textarea>
+              
+                    <textarea id="edit2" v-model="content" rows="16" name="content" maxlength='500' placeholder="正文" class="input22" ></textarea>
                 </div>
-            </div>
-            <div class="uk-form-row">
-                <label class="uk-form-label">摘要:</label>
-                <div class="uk-form-controls">
-                    <textarea v-model="summary" rows="4" name="summary" maxlength='200' placeholder="最多输入200个字" class="uk-width-1-1" style="resize:none;"></textarea>
-                </div>
-            </div>
-            <div class="uk-form-row">
-                <label class="uk-form-label">内容:</label>
-                <div class="uk-form-controls">
-                    <textarea v-model="content" rows="16" name="content" maxlength='500' placeholder="最多输入500个字" class="uk-width-1-1" style="resize:none;"></textarea>
-                </div>
-            </div>
-            <div class="uk-form-row">
-                <button type="submit" class="uk-button uk-button-primary"><i class="uk-icon-save"></i> 保存</button>
-                <a href="/manage/blogs" class="uk-button"><i class="uk-icon-times"></i> 取消</a>
+          
+            <div class="buttonbox">
+                <button class="button" type="submit">发表</button>
+                <a href="/" class="whitebutton">取消</a>
             </div>
         </form>
-    </div>
-
+</div>
 {% endblock %}

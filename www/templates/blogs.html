@@ -5,28 +5,141 @@
 {% block beforehead %}
 
 <script>
+$(function(){
+    $('#vm').show();
+    var follow = new Vue({
+        el:'#vm',
+        data:{
+            state:0,
+                blogs:'',
+                page:'',
+                pageCodes:''
+            },
+                
+                ready:function (){
+                     this.getAllBlogs(1,'read_num desc');
+
+                   
+                },
+        methods:{
+            getPageCodes: function(page) {
+                this.pageCodes=[];
+                this.pageCodes.push(page.page_index);
+                if(page.page_count-page.page_index<5){
+                       var i= page.page_count-page.page_index;
+                }
+                else{var i=5}
+                if(page.page_index<6){
+                    var j =page.page_index-1;
+                }
+                else{var j=5;}
+                  var pageCode=page.page_index;
+                    for(;i>0;i--){
+                        pageCode++;
+                        this.pageCodes.push(pageCode);                        
+                    }
+                var pageCode2=this.page.page_index;
+                    for(;j>0;j--){
+                        pageCode2--;
+                        this.pageCodes.unshift(pageCode2);                     
+                    }
+            },
+            getFocusBlogs:function(pageCode){
+                if('{{__user__}}'=='None'){
+                    window.location.replace('/signin');
+                }
+                if((pageCode==this.page.page_index) && this.state==1){
+                    return
+                }
+                var $follow = $('#follow');
+                that=this;
+                $follow.addClass('disabled');
+                    postJSON('/api/focus/blogs',{page:pageCode},function(err,r){
+                        $follow.removeClass('disabled');
+                        if(err){showInfo(err)}
+                        if(!err){
+                                that.state=1;
+                                that.blogs=r.blogs;
+                                that.page=r.page;
+                                that.getPageCodes(r.page);
+                        }
+                    });
+            },
+            getAllBlogs:function(pageCode,order){
+                if((pageCode==this.page.page_index) && this.state==0){
+                    return
+                    
+                }
+                 var $hot = $('#hot');
+                that=this;
+                $hot.addClass('disabled');
+                postJSON('/api/getallblogs',{page:pageCode,order:order},function(err,r){
+                    $hot.removeClass('disabled');
+                        if (err) {showInfo(err)}
+                        else{
+                                that.state=0;
+                                that.blogs=r.blogs;
+                                that.page=r.page;
+                                that.getPageCodes(r.page);
+                        }
+                })
+            },getLikeBlogs:function(pageCode) {
+                if((pageCode==this.page.page_index) && this.state==2){
+                    return   
+                }
+                var $like=$('#like');
+                $like.addClass('disabled');
+                postJSON('/api/getlike',{page:pageCode},function(err,r){
+                    $like.removeClass('disabled');
+                     if (err) {showInfo(err)}
+                        else{
+                                that.state=2;
+                                that.blogs=r.blogs;
+                                that.page=r.page;
+                                that.getPageCodes(r.page);
+                        }
+                })
+            }
+        }
+    });
+});
+
 </script>
 
 {% endblock %}
 
 {% block content %}
 
-    <div class="uk-width-medium-3-4">
-        <div class="uk-tab-center .uk-width-medium-*">
-        <ul class="uk-tab" data-uk-tab="{connect:'#set'}">
-            <li class="uk-active"><a href="#base">热门</a></li>
-            <li><a href="#pw">关注</a></li>
+    <div id="vm" class="blogsbox">
+        <div class="subnav">
+        <ul>
+            <li><a v-class="state==0?'active':''" href="javascript:void(0)" id="hot" v-on="click:getAllBlogs(1,'read_num desc')">热门</a></li>
+            <li><a v-class="state==1?'active':''" href="javascript:void(0)" id="follow" v-on="click:getFocusBlogs(1)">关注</a></li>
+            <li><a v-class="state==2?'active':''" href="javascript:void(0)" id="like" v-on="click:getLikeBlogs(1)">喜欢</a></li>
         </ul>
-    </div>
-    {% for blog in blogs %}
-        <article class="uk-article">
-            <h2><a href="/blog/{{ blog.id }}">{{ blog.name }}</a></h2>
-            <p class="uk-article-meta"><a href="/user/{{blog.user_name}}">{{ blog.user_name}}</a>  |  {{ blog.created_at|datetime }}</p>
-            <p>{{ blog.summary }}</p>
-            <p><a href="/blog/{{ blog.id }}">继续阅读 <i class="uk-icon-angle-double-right"></i></a></p>
+     </div>
+       <div class="articles">
+       <article class="articlebox" v-repeat="blog : blogs">
+        <div>            
+            <h2><a v-attr="href:'/blog/'+blog.id" v-text="blog.name"></a></h2>
+            
+           <div v-if="blog.summary" class="summary" v-html="blog.summary"></div>
+           <p class="bloginfo"><a class="author fragment" v-attr="href:'/user/'+blog.user_name" v-text="blog.user_name"></a><span class="fragment"><i class="uk-icon-heart gred"></i><span class="num" v-text="blog.like_num"></span></span><span class="fragment"><i class="uk-icon-eye gred"></i><span class="num" v-text="blog.read_num"></span></span><span class="time fragment" v-text="blog.created_at.toDateTime()"></span></p> 
+        </div>
+        <img class="blogimg" v-if="blog.image" v-attr="src:blog.image" style="height:100px;width:100px">
         </article>
-        <hr class="uk-article-divider">
-    {% endfor %}
-    {{ pagination('/?page=', page) }}
+        </div>
+
+      
+   
+        <ul class="pagination" v-if="state==1">
+            <li v-repeat="pageCode:pageCodes"><a v-class="pageCode==page.page_index?'active':''" href="javascript:void(0)" v-on="click:getFocusBlogs(pageCode)" v-text="pageCode"></a></li>
+        </ul>
+        <ul class="pagination" v-if="state==0">
+            <li v-repeat="pageCode:pageCodes"><a v-class="pageCode==page.page_index?'active':''" href="javascript:void(0)" v-on="click:getAllBlogs(pageCode)" v-text="pageCode"></a></li>
+        </ul>
+        <ul class="pagination" v-if="state==2">
+            <li v-repeat="pageCode:pageCodes"><a v-class="pageCode==page.page_index?'active':''" href="javascript:void(0)" v-on="click:getLikeBlogs(pageCode)" v-text="pageCode"></a></li>
+        </ul>
     </div>
 {% endblock %}

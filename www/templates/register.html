@@ -1,19 +1,25 @@
-{% extends '__base__.html' %}
-
-{% block title %}注册{% endblock %}
-
-{% block beforehead %}
-
+<!DOCTYPE html>
+<html class="uk-height-1-1">
+<head>
+    <meta charset="utf-8" />
+    <title>注册</title>
+    <link rel="stylesheet" href="/static/css/uikit.min.css">
+    <link rel="stylesheet" href="/static/css/uikit.gradient.min.css">
+    <link rel="stylesheet" href="/static/css/awesome.css" />
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/sha1.min.js"></script>
+    <script src="/static/js/uikit.min.js"></script>
+    <script src="/static/js/vue.min.js"></script>
+    <script src="/static/js/awesome.js"></script>
 <script>
-
 function validateEmail(email) {
     var re = /^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$/;
     return re.test(email.toLowerCase());
 }
 
 $(function () {
-    var vm = new Vue({
-        el: '#vm',
+    var re = new Vue({
+        el: '#re',
         data: {
             name: '',
             email: '',
@@ -23,18 +29,18 @@ $(function () {
         methods: {
             submit: function (event) {
                 event.preventDefault();
-                var $form = $('#vm');
+                var $form = $('#re');
                 if (! this.name.trim()) {
-                    return $form.showFormError('请输入名字');
+                    return showInfo('请输入名字',1);
                 }
                 if (! validateEmail(this.email.trim().toLowerCase())) {
-                    return $form.showFormError('请输入正确的Email地址');
+                    return showInfo('请输入正确的Email地址',1);
                 }
                 if (this.password1.length < 6) {
-                    return $form.showFormError('口令长度至少为6个字符');
+                    return showInfo('口令长度至少为6个字符',1);
                 }
                 if (this.password1 !== this.password2) {
-                    return $form.showFormError('两次输入的口令不一致');
+                    return showInfo('两次输入的口令不一致',1);
                 }
                 var email = this.email.trim().toLowerCase();
                 $form.postJSON('/api/register', {
@@ -42,55 +48,36 @@ $(function () {
                     email: email,
                     passwd: CryptoJS.SHA1(email + ':' + this.password1).toString()
                 }, function (err, r) {
-                    if (err) {
-                        return $form.showFormError(err);
+                    if (!err) {
+                            return location.assign('/');
                     }
-                    return location.assign('/');
+                   
                 });
             }
         }
     });
-    $('#vm').show();
 });
 
 </script>
 
-{% endblock %}
-
-{% block content %}
-
-    <div class="uk-width-2-3">
-        <h1>欢迎注册！</h1>
-        <form id="vm" v-on="submit: submit" class="uk-form uk-form-stacked">
-            <div class="uk-alert uk-alert-danger uk-hidden"></div>
-            <div class="uk-form-row">
-                <label class="uk-form-label">名字:</label>
-                <div class="uk-form-controls">
-                    <input v-model="name" type="text" maxlength="10" placeholder="名字" class="uk-width-1-1">
-                </div>
+</head>
+<body style="background:#252527;">
+        <form id="re" v-on="submit: submit" class="login_d">
+               <h2 class="little-big-header">Register!</h2>
+                <div class="login_con">
+                    <input v-model="name" type="text" maxlength="10" placeholder="名字" class="input1">
+                  
+                    <input v-model="email" type="text" maxlength="50" placeholder="yourname@gmail.com" class="input1">
+ 
+                    <input v-model="password1" type="password" maxlength="16" placeholder="输入口令" class="input1">
+              
+                    <input v-model="password2" type="password" maxlength="16" placeholder="重复口令" class="input2">
             </div>
-            <div class="uk-form-row">
-                <label class="uk-form-label">电子邮件:</label>
-                <div class="uk-form-controls">
-                    <input v-model="email" type="text" maxlength="50" placeholder="your-name@example.com" class="uk-width-1-1">
-                </div>
+            <div class="login_con" style="background:none;">
+                <button type="submit" class="blue_button">注册</button>
             </div>
-            <div class="uk-form-row">
-                <label class="uk-form-label">输入口令:</label>
-                <div class="uk-form-controls">
-                    <input v-model="password1" type="password" maxlength="16" placeholder="输入口令" class="uk-width-1-1">
-                </div>
-            </div>
-            <div class="uk-form-row">
-                <label class="uk-form-label">重复口令:</label>
-                <div class="uk-form-controls">
-                    <input v-model="password2" type="password" maxlength="16" placeholder="重复口令" class="uk-width-1-1">
-                </div>
-            </div>
-            <div class="uk-form-row">
-                <button type="submit" class="uk-button uk-button-primary"><i class="uk-icon-user"></i> 注册</button>
-            </div>
+            <div class="login_con" style="background:none;">
+            <a id="register_a" href="/">不想注册，回首页。</a>
         </form>
-    </div>
-
-{% endblock %}
+</body>
+</html>

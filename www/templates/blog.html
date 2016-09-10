@@ -7,93 +7,182 @@
 <script>
 
 var comment_url = '/api/blogs/{{ blog.id }}/comments';
-
 $(function () {
+    var editor =new wangEditor('commentArea');
+    editor.config.menuFixed = false;
+    editor.config.menus = [
+        'bold',
+        'underline',
+        'italic',
+        'strikethrough',
+        'eraser',
+        'forecolor',
+        '|',
+        'quote',
+        'fontfamily',
+        'fontsize',
+        'head',
+        'unorderlist',
+        'orderlist',
+        'alignleft',
+        'aligncenter',
+        'alignright',
+        '|',
+        'link',
+        'unlink',
+        'emotion',
+        '|',
+        'img',
+        'insertcode',
+        '|',
+        'undo',
+        'redo',
+    ];
+editor.create();
+    var article = new Vue({
+        el:'#article',data:{
+            reblog:''
+        },
+        ready:function(){
+                 if ('{{__user__.id}}'=='{{blog.user_id}}') {
+                 $('#like').addClass('disabled');
+               }
+            this.addLikeBlog('{{blog.id}}',1);
+        },methods:{
+            addLikeBlog:function(blogid,op){
+                $like=$('.likebutton');
+            if ('{{__user__.id}}'=='{{blog.user_id}}') {op=1;}
+            
+            $like.addClass('disabled');
+            that=this;
+            postJSON('/api/likeblog',{blog_id:blogid,op:op},function(err,r){
+              if ('{{__user__.id}}'!='{{blog.user_id}}') {  $like.removeClass('disabled');}
+            if(err){
+                showInfo(err);
+            }else{
+                that.reblog=r.reblog;
+                if(r.message==0){$like.css('color','#70B3DC');}
+                else{
+                    
+                    $like.css('color','#FF1E00');
+                }
+                
+            }
+        });}
+        }
+    });
+
+
+    
     var $form = $('#form-comment');
     $form.submit(function (e) {
         e.preventDefault();
-        $form.showFormError('');
         var content = $form.find('textarea').val().trim();
         if (content==='') {
-            return $form.showFormError('请输入评论内容！');
+          showInfo('请输入评论内容！',1);
         }
-        $form.postJSON(comment_url, { content: content }, function (err, result) {
-            if (err) {
-                return $form.showFormError(err);
+        else{$form.postJSON(comment_url, { content: content }, function (err, result) {
+            if (!err) {
+               location.reload();
             }
-            refresh();
-        });
+            
+        });}
+        
     });
-});
+
+
+
+        }); 
+   function deleteItem(item) {
+                var that = this;
+                if (confirm('确认要删除 ' + (item.name||item.user_name+' 的这条评论') +'？删除后不可恢复！')) {
+                    postJSON('/api/'+item.table+'/' + item.id + '/delete', function (err, r) {
+                        if (err) {
+                            showInfo(err);
+                        }
+                        else if(r.id) {
+                            if(item.table=='comments'){
+                                $('#'+item.id).remove();
+                            }
+                            else{
+                                window.location.replace('/');
+                            }
+                        }
+                    });
+                }
+            }
 </script>
 
 {% endblock %}
 
 {% block content %}
 
-    <div class="uk-width-medium-3-4">
-        <article class="uk-article">
+<div class="uk-width-medium-3-5 oneblog">
+        <article id="article">
             <h2>{{ blog.name }}</h2>
-            <a href="/user/{{blog.user_name}} ">{{ blog.user_name }}    </a><span>{{ blog.created_at|datetime }}<span>
+            <span class="fragment author"><a href="/user/{{blog.user_name}} ">{{ blog.user_name }}</a></span><span class="fragment smarttime">{{ blog.created_at|datetime }}      </span>
                 {% if blog.update_at %}
-                    <span>  更新于{{ blog.update_at|datetime }}</span>
+                    <span class="fragment smarttime">更新于{{ blog.update_at|datetime}}</span>
+
                 {% endif %}
+                <span class="fragment"><a class="likebutton" v-on="click: addLikeBlog('{{blog.id}}',2)" href="javascript:void(0)"><i class="uk-icon-heart"></i></a><span class="num gred" v-text="reblog.like_num"></span></span><span class="fragment"><i class="uk-icon-eye blue"></i><span class="num gred" v-text="reblog.read_num"></span></span>
+             {% if __user__.admin or (__user__.id==blog.user_id) %}   <a onclick="deleteItem({{blog}})" href="javascript:void(0)" class="delete">删除</a> <a class="edit" href="/manage/blogs/edit?id={{blog.id}}">编辑</a>{% endif %}
             </p>
-            <p>{{ blog.html_content|safe }}</p>
+            <div class="blogcontent">{{ blog.html_content|safe }}</div>
         </article>
 
         <hr class="uk-article-divider">
 
-    {% if __user__ %}
-        <h3>发表评论</h3>
+   
+
+        
+ {% if __user__ %}
 
         <article class="uk-comment">
-            <header class="uk-comment-header">
-                <img class="uk-comment-avatar uk-border-circle" width="50" height="50" src="{{ __user__.image }}">
-                <h4 class="uk-comment-title">{{ __user__.name }}</h4>
-            </header>
-            <div class="uk-comment-body">
+            <div class="uk-comment-header">
+                <div class="commentuser"><img class="uk-comment-avatar uk-border-circle" width="50" height="50" src="{{ __user__.image }}">
+                <h3 class="uk-comment-title">{{ __user__.name }}</h3> </div>
+                           <div class="uk-comment-body">
                 <form id="form-comment" class="uk-form">
-                    <div class="uk-alert uk-alert-danger uk-hidden"></div>
+                
                     <div class="uk-form-row">
-                        <textarea rows="6" placeholder="说点什么吧" style="width:100%;resize:none;"></textarea>
+                        <textarea id="commentArea" rows="6" placeholder="说点什么吧" style="width:100%;resize:none;border-radius:0;"></textarea>
                     </div>
                     <div class="uk-form-row">
-                        <button type="submit" class="uk-button uk-button-primary"><i class="uk-icon-comment"></i> 发表评论</button>
+                        <button type="submit" class="recbutton">发表评论</button>
                     </div>
                 </form>
             </div>
+            </div>
+
         </article>
+      <div class="comentnav"><h3>最新评论</h3></div>  
 
-        <hr class="uk-article-divider">
+  
     {% endif %}
-
-        <h3>最新评论</h3>
-
         <ul class="uk-comment-list">
             {% for comment in comments %}
-            <li><a name="{{comment.id}}">
-                <article class="uk-comment">
-                    <header class="uk-comment-header">
-                        <img class="uk-comment-avatar uk-border-circle" width="50" height="50" src="{{ comment.user_image }}">
-                        <h4 class="uk-comment-title">{{ comment.user_name }} {% if comment.user_id==blog.user_id %}(作者){% endif %}</h4>
-                        <p class="uk-comment-meta">{{ comment.created_at|datetime }}</p>
+            <li id="{{comment.id}}">
+            <!-- 评论书签 -->
+                <article class="uk-comment"><a name="{{comment.id}}" class="disabled" href="javascript:void(0)"></a>
+                    <header class="uk-comment-header comment-header">
+                    <a href="/user/{{comment.user_name}}">
+                        <img class="uk-comment-avatar uk-border-circle" width="50" height="50" src="{{ comment.user_image }}"></a>
+                        <h4 class="uk-comment-title"><span>{{ comment.user_name }} {% if comment.user_id==blog.user_id %}<span class="authoricon">(作者)</span>{% endif %} </span><span class="smarttime">{{ comment.created_at|datetime }}</span></h4>{% if __user__.admin or comment.user_id==__user__.id %}<a class="delete" style="position:absolute;right:1em;bottom:0.5em;" onclick="deleteItem({{comment}})" href="javascript:void(0)">删除</a>{% endif %}
+                
                     </header>
-                    <div class="uk-comment-body">
-                        {{ comment.html_content|safe }}<a href="javascript(void);">删除</a>
+                    
+                    <div class="comment-body">
+                        {{ comment.html_content|safe }}
                     </div>
                 </article>
-                <a>
+                
             </li>
             {% else %}
             <p>还没有人评论...</p>
             {% endfor %}
         </ul>
 
-    </div>
-
-    <div class="uk-width-medium-1-4">
-        
-    </div>
+</div>
 
 {% endblock %}

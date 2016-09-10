@@ -285,12 +285,12 @@ $(function () {
             }
             return this.each(function () {
                 var $form = $(this);
-                $form.showFormError();
-                $form.showFormLoading(true);
+                // $form.showFormError();
+                // $form.showFormLoading(true);
                 _httpJSON('POST', url, data, function (err, r) {
                     if (err) {
-                        $form.showFormError(err);
-                        $form.showFormLoading(false);
+                        showInfo(err);
+                        // $form.showFormLoading(false);
                     }
                     callback && callback(err, r);
                 });
@@ -312,7 +312,7 @@ function _httpJSON(method, url, data, callback) {
     if (method==='POST') {
         opt.url = url;
         opt.data = JSON.stringify(data || {});
-        opt.contentType = 'application/json';
+        opt.contentType = 'application/json;charset=utf-8';
     }
     $.ajax(opt).done(function (r) {
         if (r && r.error) {
@@ -457,3 +457,67 @@ function fatal(err) {
     _display_error($('#loading'), err);
 }
 
+function showInfo(info,op) {
+    op= op || 0;
+    $('.confirm_con').remove();
+    $('.alert_bg').remove();
+    var s = "<div class='alert_bg'></div><div class='confirm_con'><div class='alert_con'></div></div>"
+    $('body').prepend(s).css({overflow: "hidden"});
+    $('.alert_bg').fadeIn(300);
+    msg=info.message ? info.message : (info.error ? info.error : info);
+    if (!op) {
+        $('.alert_con').css({"color":"#871724"});
+        opText="出错："
+
+};
+    if(op) {
+            $('.alert_con').css({"color":"#FCD000"});
+        opText="提示："
+    }
+    $('.alert_con').text(opText+msg);
+    $('.confirm_con').slideDown(200);
+    $('.alert_bg').click(function(){
+        $('body').css({overflow: "visible"});
+        $('.confirm_con').slideUp(200);
+        $('.alert_bg').fadeOut(100);
+    });
+}
+
+        function getNewsNum(){
+            that=this;
+            postJSON('/api/getnewsnum',{},function(err,r){
+                if(err){
+                    showInfo(err);
+                    // that.getNewsNum();
+                }
+                    else if(r.newsNum>0){
+                            that.newsNum=r.newsNum;
+                            alert(r.newsNum);
+
+                    }
+            })
+        }
+
+        function getPageCodes(index,count) {
+                pageCodes=[];
+                pageCodes.push(index);
+                if(count-index<5){
+                       var i= count-index;
+                }
+                else{var i=5}
+                if(index<6){
+                    var j =index-1;
+                }
+                else{var j=5;}
+                  var pageCode=index;
+                    for(;i>0;i--){
+                        pageCode++;
+                        pageCodes.push(pageCode);                        
+                    }
+                var pageCode2=index;
+                    for(;j>0;j--){
+                        pageCode2--;
+                        pageCodes.unshift(pageCode2);                     
+                    }
+                    return pageCodes;
+            }

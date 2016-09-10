@@ -20,7 +20,7 @@ from config import configs
 import orm
 from coroweb import add_routes, add_static
 
-from handlers import cookie2user, COOKIE_NAME,no_cache
+from handlers import cookie2user, COOKIE_NAME
 
 def init_jinja2(app, **kw):
     logging.info('init jinja2...')
@@ -64,24 +64,24 @@ def auth_factory(app, handler):
             if user:
                 logging.info('set current user: %s' % user.email)
                 request.__user__ = user
-        if (request.path.startswith('/manage') or request.path.startswith('/setting')) and (request.__user__ is None):
+        if (request.path.startswith('/manage') or request.path.startswith('/setting') or request.path.startswith('/service')) and (request.__user__ is None):
             return web.HTTPFound('/signin')
         return (yield from handler(request))
     return auth
 
-@asyncio.coroutine
-def data_factory(app, handler):
-    @asyncio.coroutine
-    def parse_data(request):
-        if request.method == 'POST':
-            if request.content_type.startswith('application/json'):
-                request.__data__ = yield from request.json()
-                logging.info('request json: %s' % str(request.__data__))
-            elif request.content_type.startswith('application/x-www-form-urlencoded'):
-                request.__data__ = yield from request.post()
-                logging.info('request form: %s' % str(request.__data__))
-        return (yield from handler(request))
-    return parse_data
+# @asyncio.coroutine
+# def data_factory(app, handler):
+#     @asyncio.coroutine
+#     def parse_data(request):
+#         if request.method == 'POST':
+#             if request.content_type.startswith('application/json'):
+#                 request.__data__ = yield from request.json()
+#                 logging.info('request json: %s' % str(request.__data__))
+#             elif request.content_type.startswith('application/x-www-form-urlencoded'):
+#                 request.__data__ = yield from request.post()
+#                 logging.info('request form: %s' % str(request.__data__))
+#         return (yield from handler(request))
+#     return parse_data
 
 @asyncio.coroutine
 def response_factory(app, handler):
@@ -150,7 +150,7 @@ def init(loop):
     init_jinja2(app, filters=dict(datetime=datetime_filter))
     add_routes(app, 'handlers')
     add_static(app)
-    duan='2005'
+    duan='2003'
     srv = yield from loop.create_server(app.make_handler(), '127.0.0.1', duan)
     logging.info('server started at http://127.0.0.1:'+duan)
     return srv

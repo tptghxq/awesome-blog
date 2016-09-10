@@ -18,7 +18,7 @@ var vm  = new Vue({
       methods:{
         
         followuser: function(str){
-            if ('{{ user.id }}' != '{{ __user__.id }}') {
+            if ('{{__user__.name}}' && '{{ user.id }}' != '{{ __user__.id }}') {
                 var $focusButton =$('#focusButton');
                     $focusButton.addClass('disabled');
                 var $vm = $('#vm');
@@ -28,7 +28,6 @@ var vm  = new Vue({
                     state:str
                 },function(err,r){
                     if (!err) {
-                            // alert(r.message);
                             that.message=r.message;
                             $focusButton.removeClass('disabled');
                     }
@@ -37,42 +36,57 @@ var vm  = new Vue({
         }
       }
 });
+var pagination=new Vue({el:".pagination2",data:{
+    pageCodes:getPageCodes('{{page.page_index}}','{{page.page_count}}')},methods:{gotoPage:function(pageCode){
+        if(pageCode=='{{page.page_index}}'){
+            return;
+        }
+        gotoPage(pageCode);
+    }
+}
+});
 });
 </script>
 
 {% endblock %}
 
 {% block content %}
-<div class="uk-width-medium-3-4">
+<div class="ablog">
+<div class="userbox" id="vm">
+        
+            <img class="uk-border-circle" width="120" height="120" src="{{ user.image }}">
+            <h2>{{ user.name }}</h2>
+            <button v-on="click: followuser('change')" v-if="{{__user__}} && '{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" v-class="message?'undobutton':'dobutton'" v-text="message?'取关':'关注'"></botton><div><div><a href=""><p>关注</p><p>num</p></a></div><div><a href=""><p>粉丝</p><p>num</p></a></div></div>
+       
+</div>
+<div class="bloglist">
 <div class="uk-article-title">
 			<ul class="uk-breadcrumb">
                 <li class="title">文章列表</li>
             </ul> 
 </div>
-    <hr class="uk-article-divider">
+
     {% for blog in blogs %}
-        <article class="uk-article">
+        <article>
             <h2>
             	<a href="/blog/{{ blog.id }}">
             		{{ blog.name }}
             	</a>
             </h2>
             <div>
-            	<span>{{ blog.created_at|datetime }}</span>
-            	<span>  阅读</span>
-            	<span>  喜欢</span>
+            	<span class="fragment smarttime">{{ blog.created_at|datetime }}</span>
+            	<span class="fragment">阅读<span class="num">{{blog.read_num}}</span></span>
+            	<span class="fragment">喜欢<span class="num">{{blog.like_num}}</span></span>
             </div>
         </article>
         <hr class="uk-article-divider">
     {% endfor %}
-    {{ pagination('/?page=', page) }}
+    <!-- {{ pagination('/?page=', page) }} -->
+    <ul class="pagination2">
+            <li v-repeat="pageCode:pageCodes"><a v-class="pageCode=={{page.page_index}}?'active':''" href="javascript:void(0)" v-on="click:gotoPage(pageCode)" v-text="pageCode"></a></li>
+        </ul>
 </div>
 
-<div class="uk-width-medium-1-4" id="vm">
-        <div class="uk-text-center">
-            <img class="uk-border-circle" width="120" height="120" src="{{ user.image }}">
-            <h3>{{ user.name }}</h3>
-            <button v-on="click: followuser('change')" v-if="{{__user__}} && '{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" v-class="message?'uk-button':'uk-button-primary'">关注</botton>
-        </div>
+
 </div>
 {% endblock %}

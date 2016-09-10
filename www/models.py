@@ -9,7 +9,7 @@ __author__ = 'Michael Liao'
 
 import time, uuid
 
-from orm import Model, StringField, BooleanField, FloatField, TextField
+from orm import Model, StringField, BooleanField, FloatField, TextField,SmallIntField,IntField
 
 def next_id():
     return '%015d%s000' % (int(time.time() * 1000), uuid.uuid4().hex)
@@ -32,6 +32,9 @@ class Blog(Model):
     user_id = StringField(ddl='varchar(50)')
     user_name = StringField(ddl='varchar(50)')
     user_image = StringField(ddl='varchar(500)')
+    image = StringField(ddl='varchar(500)')
+    read_num = IntField()
+    like_num = SmallIntField()
     name = StringField(ddl='varchar(50)')
     summary = StringField(ddl='varchar(200)')
     content = TextField()
@@ -58,6 +61,7 @@ class Follow(Model):
     to_user_id = StringField(ddl='varchar(50)')
     created_at = FloatField(default=time.time)
 
+
 class Appreciate(Model):
     __table__ = 'appreciates'
 
@@ -74,3 +78,4 @@ class Conversation(Model):
     to_user_id = StringField(ddl='varchar(50)')
     content = TextField()
     created_at = FloatField(default=time.time)
+    news = BooleanField()
