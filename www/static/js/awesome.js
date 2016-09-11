@@ -521,3 +521,22 @@ function showInfo(info,op) {
                     }
                     return pageCodes;
             }
+
+             function deleteItem(item) {
+               
+                if (confirm('确认要删除 ' + (item.name||item.user_name+' 的这条评论') +'？删除后不可恢复！')) {
+                    postJSON('/api/'+item.table+'/' + item.id + '/delete', function (err, r) {
+                        if (err) {
+                            showInfo(err);
+                        }
+                        else if(r.id) {
+                            if(item.table=='comments'){
+                                $('#'+item.id).remove();
+                            }
+                            else{
+                                window.location.replace('/');
+                            }
+                        }
+                    });
+                }
+            }

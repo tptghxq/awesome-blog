@@ -105,19 +105,25 @@ function initVM(blog) {
         methods: {
             submit: function (event) {
                 event.preventDefault();
-                that=this;
+                var that=this;
                 
                 this.summary = handleHtml(this.editor1.$txt.html(),'<p><br></p>');
                 this.content = handleHtml(this.editor2.$txt.html(),'<p><br></p>');
                 imgs=this.editor2.$txt.find('img');
                 imgs.each(function(){
                     if($(this).attr('alt')){
-                        that.image=$(this).attr('src');
-                        alert(that.image);
+                        imageUrl=$(this).attr('src');
+                        postJSON('/api/firstphoto',{url:imageUrl},function(err,r){
+                            if(err){showInfo(err)}
+                                else{
+                                    that.image=r.url;
+
+                                }
+                        })
                         return false;
                     }
                 });
-
+// alert(that.image);
                 var $form = $('#vm').find('form');
                 $form.postJSON(action, {name:that.name,summary:that.summary,content:that.content,image:that.image}, function (err, r) {
                     if (err) {

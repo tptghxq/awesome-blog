@@ -425,7 +425,9 @@ border-top-right-radius: 0.1em 0.1em;
 }
 .articlebox h2 {
   font-size: 18px;
-  
+   max-width: 600px;
+   word-wrap:break-word; 
+ word-break: break-all;     /*使英文也换行*/
   font-weight: bold;
 }
 .articlebox h2 a{

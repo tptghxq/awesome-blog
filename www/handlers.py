@@ -21,9 +21,11 @@ from config import configs
 COOKIE_NAME = 'awesession'
 _COOKIE_KEY = configs.session.secret
 
+
 def cropImage(fpath,tpath):
     im = Image.open(fpath)
-    w,h =im.size
+    if im:
+      w,h =im.size
     if w>h:
       box=((w-h)/2,0,w-(w-h)/2,h)
       newim=im.crop(box)
@@ -201,10 +203,15 @@ def savephoto(request):
             f.write(iofile.read())
         return imageUrl
 
-# @post('/api/firstphoto')
-# def getfirstblogphoto(*,path):
-#     tpath=next_id
-#     cropImage(path,)
+@post('/api/firstphoto')
+def getfirstblogphoto(*,url):
+    oldname=url.split('/')[-1]
+    newname=next_id()+url[url.find('.'):]
+    fpath = os.path.join(os.path.join(os.path.join(os.path.abspath('.'),'static'),'img'),oldname)
+    tpath = os.path.join(os.path.join(os.path.join(os.path.abspath('.'),'static'),'img'),newname)
+    cropImage(fpath,tpath)
+    newUrl='/static/img/'+newname
+    return {'url':newUrl}
 
 @post('/api/getallblogs')
 def getallblogs(*,page='1',order='read_num desc'):

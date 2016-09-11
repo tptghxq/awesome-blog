@@ -92,25 +92,9 @@ editor.create();
 
 
 
+       
         }); 
-   function deleteItem(item) {
-                var that = this;
-                if (confirm('确认要删除 ' + (item.name||item.user_name+' 的这条评论') +'？删除后不可恢复！')) {
-                    postJSON('/api/'+item.table+'/' + item.id + '/delete', function (err, r) {
-                        if (err) {
-                            showInfo(err);
-                        }
-                        else if(r.id) {
-                            if(item.table=='comments'){
-                                $('#'+item.id).remove();
-                            }
-                            else{
-                                window.location.replace('/');
-                            }
-                        }
-                    });
-                }
-            }
+  
 </script>
 
 {% endblock %}
@@ -126,8 +110,10 @@ editor.create();
 
                 {% endif %}
                 <span class="fragment"><a class="likebutton" v-on="click: addLikeBlog('{{blog.id}}',2)" href="javascript:void(0)"><i class="uk-icon-heart"></i></a><span class="num gred" v-text="reblog.like_num"></span></span><span class="fragment"><i class="uk-icon-eye blue"></i><span class="num gred" v-text="reblog.read_num"></span></span>
-             {% if __user__.admin or (__user__.id==blog.user_id) %}   <a onclick="deleteItem({{blog}})" href="javascript:void(0)" class="delete">删除</a> <a class="edit" href="/manage/blogs/edit?id={{blog.id}}">编辑</a>{% endif %}
-            </p>
+             {% if __user__.admin or __user__.id==blog.user_id %}   
+             <a onclick="deleteItem({{blog}})" class="delete" href="javascript:void(0)">删除</a> 
+             <a class="edit" href="/manage/blogs/edit?id={{blog.id}}">编辑</a>
+             {% endif %}
             <div class="blogcontent">{{ blog.html_content|safe }}</div>
         </article>
 
