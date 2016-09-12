@@ -5,10 +5,12 @@
 {% block beforehead %}
 
 <script>
-
 var
     ID = '{{ id }}',
     action = '{{ action }}';
+
+$(function () {
+
 function handleHtml(html,str){
     if(html.slice(-str.length)==str){
         html=html.slice(0,-str.length);
@@ -97,7 +99,7 @@ function initVM(blog) {
             title:'默认',
             data:'../../static/emotions/emotions.data'
         }
-    }
+    };
     editor2.create();
     this.editor2=editor2;
 
@@ -106,40 +108,62 @@ function initVM(blog) {
             submit: function (event) {
                 event.preventDefault();
                 var that=this;
-                
+             
                 this.summary = handleHtml(this.editor1.$txt.html(),'<p><br></p>');
                 this.content = handleHtml(this.editor2.$txt.html(),'<p><br></p>');
-                imgs=this.editor2.$txt.find('img');
-                imgs.each(function(){
+                
+                var imgs=this.editor2.$txt.find('img');
+                var firstBlogPhoto;
+                if(imgs.length){
+                    imgs.each(function(){                    
                     if($(this).attr('alt')){
+                        firstBlogPhoto=$(this).attr('alt');
                         imageUrl=$(this).attr('src');
                         postJSON('/api/firstphoto',{url:imageUrl},function(err,r){
-                            if(err){showInfo(err)}
-                                else{
-                                    that.image=r.url;
-
+                            if(err){showInfo(err);alert(3)}
+                                else{   
+                                that.image=r.url;
+                                postBlogFirst()
                                 }
-                        })
+                        });
                         return false;
                     }
                 });
-// alert(that.image);
-                var $form = $('#vm').find('form');
+                if(firstBlogPhoto==undefined){
+                    postBlogFirst()
+                }    
+                }
+                else{
+                    postBlogFirst()
+                }
+                // setTimeout(function(){
+                    function postBlogFirst(){
+                          var $form = $('#vm').find('form');
                 $form.postJSON(action, {name:that.name,summary:that.summary,content:that.content,image:that.image}, function (err, r) {
                     if (err) {
-                        showInfo(err);
+                        showInfo(err); alert(1);
                     }
                     else {
-                        return location.assign('/blog/'+r.id);
+                        alert(2);
+                         return location.assign('/blog/'+r.id);
                     }
                 });
+                    }
+
+                    
+                // },1000) 
+
+              
+
+
+          
             }
         }
     });
     $('#vm').show();
 }
 
-$(function () {
+
     if (ID) {
         getJSON('/api/blogs/' + ID, function (err, blog) {
             if (err) {
@@ -179,7 +203,7 @@ $(function () {
 
   
 
-        <form v-on="submit: submit" class="formstyle2">
+        <form v-on:submit="submit" class="formstyle2">
                 <div id="loading" class="uk-width-1-1 uk-text-center">
         <span><i class="uk-icon-spinner uk-icon-medium uk-icon-spin"></i> 正在加载...</span>
     </div>

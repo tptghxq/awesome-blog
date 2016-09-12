@@ -364,13 +364,15 @@ def get_blog(id):
     }
 @post('/api/likeblog')
 def doLikeBlog(request,*,blog_id,op):
-    user = request.__user__
-    if user is None:
-        raise APIPermissionError('请登陆后再喜欢哦')
-    appreciate=yield from Appreciate.find(user.id,'user_id',blog_id,'blog_id')
     blog=yield from Blog.find(blog_id)
+    user = request.__user__
     if blog is None:
         raise APIResourceNotFoundError('没有这篇博客')
+    if op==1 and user is None:
+        return {'message':0,'reblog':blog}
+    if op==2 and user is None:
+        raise APIPermissionError('请登陆后再喜欢哦')
+    appreciate=yield from Appreciate.find(user.id,'user_id',blog_id,'blog_id')   
     if appreciate is None:
         if op==1:
             return{'message':0,'reblog':blog}
@@ -392,62 +394,67 @@ def doLikeBlog(request,*,blog_id,op):
 @post('/api/agree')
 def doagree(request,*,comment_id,op):
     user = request.__user__
-    if user is None:
-        raise APIPermissionError('请登陆后再赞哦')
-    agree=yield from Agree.find(user.id,'user_id',comment_id,'comment_id')
+    if user is None and op!=1:
+        raise APIPermissionError('请登录')
     comment=yield from Comment.find(comment_id)
-    if comment is None:
-        raise APIResourceNotFoundError('没有这条评论')
-    if comment.user_id == user.id:
-        raise APIPermissionError('不能对自己的评论操作')
-    if agree is None:
-        # 查看是否点赞
-        if op==1: 
-            message=1         
-        # 点赞
-        if op==2:     
-            agree2=Agree(user_id=user.id,comment_id=comment_id,state=1)
-            yield from agree2.save()
-            comment.agree_num=comment.agree_num+1
-            yield from comment.update()
-            message=2
-        if op==3:
-            agree3=Agree(user_id=user.id,comment_id=comment_id,state=0)
-            yield from agree3.save()
-            comment.agree_num=comment.agree_num-1
-            yield from comment.update()
-            message=3
-    if agree:
-        if op==1:
-            if agree.state==1:
-                message=2
-            else:
-                message=3
-        if op==2:
-            if agree.state==1:
-                yield from agree.remove()
-                comment.agree_num=comment.agree_num-1
-                yield from comment.update()
-                message=1
-            else:
-                agree.state==1
-                yield from agree.update()
-                comment.agree_num=comment.agree_num+2
-                yield from comment.update()
-                message=2
-        if op==3:
-            if agree.state==0:
-                yield from agree.remove()
+    if user is None:
+        message=1
+    else:
+        agree=yield from Agree.find(user.id,'user_id',comment_id,'comment_id')
+        if comment is None:
+            raise APIResourceNotFoundError('没有这条评论')
+        if comment.user_id == user.id and op!=1:
+            raise APIPermissionError('自己就不要给自己点赞了')
+        if agree is None:
+            # 查看是否点赞
+            if op==1: 
+                message=1         
+            # 点赞
+            if op==2:     
+                agree2=Agree(user_id=user.id,comment_id=comment_id,state=1)
+                yield from agree2.save()
                 comment.agree_num=comment.agree_num+1
                 yield from comment.update()
-                message=1
-            else:
-                agree.state==0
-                yield from agree.update()
-                comment.agree_num=comment.agree_num-2
+                message=2
+            if op==3:
+                agree3=Agree(user_id=user.id,comment_id=comment_id,state=0)
+                yield from agree3.save()
+                comment.disagree_num=comment.disagree_num+1
                 yield from comment.update()
                 message=3
-    return{'message':message,'agreenum':comment.agree_num}
+        if agree:
+            if op==1:
+                if agree.state==1:
+                    message=2
+                else:
+                    message=3
+            if op==2:
+                if agree.state==1:
+                    yield from agree.remove()
+                    comment.agree_num=comment.agree_num-1
+                    yield from comment.update()
+                    message=1
+                else:
+                    agree.state=1
+                    yield from agree.update()
+                    comment.agree_num=comment.agree_num+1
+                    comment.disagree_num=comment.disagree_num-1
+                    yield from comment.update()
+                    message=2
+            if op==3:
+                if agree.state==0:
+                    yield from agree.remove()
+                    comment.disagree_num=comment.disagree_num-1
+                    yield from comment.update()
+                    message=1
+                else:
+                    agree.state=0
+                    yield from agree.update()
+                    comment.disagree_num=comment.disagree_num+1
+                    comment.agree_num=comment.agree_num-1
+                    yield from comment.update()
+                    message=3
+    return{'message':message,'agreenum':comment.agree_num,'disagreenum':comment.disagree_num}
 
 @get('/register')
 def register():
@@ -567,7 +574,9 @@ def api_create_comment(id, request, *, content):
         raise APIValueError('content')
     blog = yield from Blog.find(id)
     if blog is None:
-        raise APIResourceNotFoundError('Blog')
+        raise APIResourceNotFoundError('发表评论失败，博客可能被删除')
+    blog.review_num=blog.review_num+1;
+    yield from blog.update()
     comment = Comment(blog_id=blog.id, user_id=user.id, user_name=user.name, user_image=user.image, content=content.strip())
     yield from comment.save()
     return comment
@@ -579,7 +588,12 @@ def api_delete_comments(id, request):
         raise APIResourceNotFoundError('Comment')
     if request.__user__.admin or c.user_id==request.__user__.id:
         yield from c.remove()
-        return dict(id=id)
+    blog = yield from Blog.find(c.blog_id)
+    if blog is None:
+        raise APIResourceNotFoundError('这篇博客不存在，可能已被删除')
+    blog.review_num = blog.review_num-1
+    yield from blog.update()
+    return dict(id=id)
 
 @post('/api/users/{id}/delete')
 def api_delete_users(id, request):
@@ -648,7 +662,7 @@ def api_get_blog(*, id):
     return blog
 
 @post('/api/blogs')
-def api_create_blog(request, *, name, summary, content,image):
+def api_create_blog(request, *, name,summary,content,image):
     if request.__user__ is None:
         raise APIPermissionError('请登录后再写博文')
     if not name or not name.strip():
@@ -657,10 +671,10 @@ def api_create_blog(request, *, name, summary, content,image):
         raise APIValueError('content', 'content cannot be empty.')
 
     argsList={'user_id':request.__user__.id,'user_name':request.__user__.name,'user_image':request.__user__.image,'name':name.strip(),'content':content.strip()}
-    if image:
-        argsList['image']=image 
     if summary:
         argsList['summary']=summary
+    if image:
+        argsList['image']=image
     blog = Blog(**argsList)
     yield from blog.save()
     return blog

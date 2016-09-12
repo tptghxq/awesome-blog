@@ -25,7 +25,7 @@ class User(Model):
     created_at = FloatField(default=time.time)
     following_num = SmallIntField(default=0)
     follower_num = IntField(default=0)
-    review_num = SmallIntField(default=0)
+    
 
 class Blog(Model):
     __table__ = 'blogs'
@@ -33,11 +33,12 @@ class Blog(Model):
     user_id = StringField(ddl='varchar(50)')
     user_name = StringField(ddl='varchar(50)')
     user_image = StringField(ddl='varchar(500)')
-    image = StringField(ddl='varchar(500)',default='')
-    read_num = IntField()
-    like_num = SmallIntField()
+    image = StringField(ddl='varchar(500)')
+    read_num = IntField(default=0)
+    like_num = SmallIntField(default=0)
+    review_num = SmallIntField(default=0)
     name = StringField(ddl='varchar(50)')
-    summary = StringField(ddl='varchar(200)',default='')
+    summary = StringField(ddl='varchar(200)')
     content = TextField()
     created_at = FloatField(default=time.time)
     update_at = FloatField()
@@ -49,6 +50,7 @@ class Comment(Model):
     blog_id = StringField(ddl='varchar(50)')
     user_id = StringField(ddl='varchar(50)')
     agree_num = SmallIntField(default=0)
+    disagree_num = SmallIntField(default=0)
     user_name = StringField(ddl='varchar(50)')
     user_image = StringField(ddl='varchar(500)')
     content = TextField()

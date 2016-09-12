@@ -301,10 +301,12 @@ $(function () {
 
 // ajax submit form:
 
-function _httpJSON(method, url, data, callback) {
+function _httpJSON(method, url, data, callback,asy) {
     var opt = {
         type: method,
-        dataType: 'json'
+        dataType: 'json',
+        // 修改异步
+        async: asy || true    
     };
     if (method==='GET') {
         opt.url = url + '?' + data;

@@ -56,7 +56,7 @@ var pagination=new Vue({el:".pagination2",data:{
         
             <img width="120" class="round" height="120" src="{{ user.image }}">
             <h2>{{ user.name }}</h2>
-            <button v-on="click: followuser('change')" v-if="'{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" v-class="message?'undobutton':'dobutton'" v-text="message?'取关':'关注'"></botton>
+            <button v-on:click="followuser('change')" v-if="'{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" :class="message?'undobutton':'dobutton'" v-text="message?'取关':'关注'"></botton>
 <!--             <div id="follownumbox">
            <div><a><p>关注</p><p>11</p></a></div>
            <div><a><p>粉丝</p><p>13</p></a></div>
@@ -85,9 +85,9 @@ var pagination=new Vue({el:".pagination2",data:{
         </article>
         <hr class="uk-article-divider">
     {% endfor %}
-    <!-- {{ pagination('/?page=', page) }} -->
+
     <ul class="pagination2">
-            <li v-repeat="pageCode:pageCodes"><a v-class="pageCode=={{page.page_index}}?'active':''" href="javascript:void(0)" v-on="click:gotoPage(pageCode)" v-text="pageCode"></a></li>
+            <li v-for="pageCode in pageCodes"><a :class="pageCode=={{page.page_index}}?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
         </ul>
 </div>
 

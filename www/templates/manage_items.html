@@ -101,9 +101,9 @@ $(function() {
 
             <div class="subnav">
                 <ul>
-                    <li><a v-class="tablename=='comments'?'active':''" href="/manage/comments">评论</a> </li>
-                    <li><a v-class="tablename=='blogs'?'active':''" href="/manage/blogs">日志</a></li>
-                    <li><a v-class="tablename=='users'?'active':''" href="/manage/users">用户</a></li>
+                    <li><a :class="tablename=='comments'?'active':''" href="/manage/comments">评论</a> </li>
+                    <li><a :class="tablename=='blogs'?'active':''" href="/manage/blogs">日志</a></li>
+                    <li><a :class="tablename=='users'?'active':''" href="/manage/users">用户</a></li>
                 </ul>                  
             </div>  
                            
@@ -117,7 +117,7 @@ $(function() {
         <table class="uk-table uk-table-hover optable">
             <thead>
                 <tr>
-                    <th v-class="title=='邮箱'||'名字'||'作者'?'uk-width-2-10':'uk-width-4-10'" v-repeat="title : models[tablename]" v-text="title"></th>
+                    <th :class="title=='邮箱'||'名字'||'作者'?'uk-width-2-10':'uk-width-4-10'" v-for="title in models[tablename]" v-text="title"></th>
                     <th class="uk-width-2-10">创建时间</th>
                     <th class="uk-width-1-10">操作</th>
                 </tr>
@@ -126,34 +126,34 @@ $(function() {
         <i class="uk-icon-spinner uk-icon-medium uk-icon-spin"></i>
     </div>            
             <tbody class="itemsbox">
-                <tr v-attr="id:item.id" v-repeat="item: items" >
+                <tr :id="item.id" v-for="item in items" >
                     <td v-if="tablename=='blogs'" >
-                        <a target="_blank" v-attr="href: '/'+tablename.slice(0,-1)+'/'+item.id" v-text="item.name"></a>
+                        <a target="_blank" :href="'/'+tablename.slice(0,-1)+'/'+item.id" v-text="item.name"></a>
                     </td>
                     <td v-if="tablename=='users'" >
-                        <a target="_blank" v-attr="href: '/'+tablename.slice(0,-1)+'/'+item.name" v-text="item.name"></a>
+                        <a target="_blank" :href="'/'+tablename.slice(0,-1)+'/'+item.name" v-text="item.name"></a>
                     </td>
                     <td v-if="tablename =='users'" v-text='item.email'>
                     </td>
                     <td v-if="tablename=='comments'">
-                        <a target="_blank"  v-attr="href: '/blog/'+item.blog_id+'#'+item.id" v-html="item.content"></a>
+                        <a target="_blank"  :href="'/blog/'+item.blog_id+'#'+item.id" v-html="item.content"></a>
                     </td>                    
                     <td v-if="tablename!='users'">
-                        <a target="_blank"  v-attr="href: '/user/'+item.user_name" v-text="item.user_name"></a>
+                        <a target="_blank"  :href="'/user/'+item.user_name" v-text="item.user_name"></a>
                     </td>
                     <td>
                         <span v-text="item.created_at.toDateTime()"></span>
                     </td>
                     <td v-if="{{__user__.admin}}==1 || (table!='users' && item.user_id=='{{__user__.id}}')">
-                        <a v-if="tablename=='blogs'" href="javascript:void(0);" v-on="click: edit_blog(item)"><i class="uk-icon-edit blue"></i>
-                        <a href="javascript:void(0)" v-on="click: delete_item(item,page)"><i class="uk-icon-trash-o blue"></i>
+                        <a v-if="tablename=='blogs'" href="javascript:void(0);" v-on:click="edit_blog(item)"><i class="uk-icon-edit blue"></i>
+                        <a href="javascript:void(0)" v-on:click="delete_item(item,page)"><i class="uk-icon-trash-o blue"></i>
                     </td>
                 </tr>
             </tbody>
         </table>
 
         <ul class="pagination">
-            <li v-repeat="pageCode:pageCodes"><a v-class="pageCode==page.page_index?'active':''" href="javascript:void(0);" v-on="click:getItemsByPage(pageCode)" v-text="pageCode"></a></li>
+            <li v-for="pageCode in pageCodes"><a :class="pageCode==page.page_index?'active':''" href="javascript:void(0);" v-on:click="getItemsByPage(pageCode)" v-text="pageCode"></a></li>
         </ul>
 
 

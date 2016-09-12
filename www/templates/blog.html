@@ -93,23 +93,30 @@ editor.create();
     });
 
 
-Vue.component('agree-box',{
-    props:['commentId'],
-    template:'<div class="agreebox"><button class="borderbutton" v-on="click:opagree(2)">赞</button><p></p><button class="borderbutton" v-on="click:opagree(3)">踩</button></div>',
+Vue.component('doagree',{
+    data:function(){
+         return {agreenum:0,message:'',disagreenum:0}
+        },
+    props:['commentid','agreenum','disagreenum'],
+    template:'<div class="agreebox"><button class="borderbutton" v-on:click="opagree(2,$event)" v-text="agreenum"></button><button class="borderbutton" v-on:click="opagree(3,$event)" v-text="disagreenum"></button></div>',
     methods:{
-        opagree:function(op){
-    
-            alert(this.commentId);
+    opagree:function(op,event){
+    $(event.target).addClass('disabled'); 
             that=this;
-    postJSON('/api/agree',{comment_id:that.commentId,op:op},function(err,r){
+    postJSON('/api/agree',{comment_id:that.commentid,op:op},function(err,r){
+        $(event.target).removeClass('disabled');
         if(err){showInfo(err);}
-        else{that.message=r.message;that.agreenum=r.agreenum;alert(that.agreenum)}
+        else{
+           that.agreenum=r.agreenum;
+           that.message=r.message;
+           that.disagreenum=r.disagreenum;
+    }
     });
 }
     }
 });
-new Vue({
-  el: '#goodbox'
+var agree = new Vue({
+  el: '#allcomment'
 });
        
         }); 
@@ -129,13 +136,13 @@ new Vue({
                     <span class="fragment smarttime">更新于{{ blog.update_at|datetime}}</span>
 
                 {% endif %}
-                <span class="fragment"><a class="likebutton" v-on="click: addLikeBlog('{{blog.id}}',2)" href="javascript:void(0)"><i class="uk-icon-heart"></i></a><span class="num gred" v-text="reblog.like_num"></span></span><span class="fragment"><i class="uk-icon-eye blue"></i><span class="num gred" v-text="reblog.read_num"></span></span>
+                <span class="fragment"><a class="likebutton" v-on:click="addLikeBlog('{{blog.id}}',2)" href="javascript:void(0)"><i class="uk-icon-heart"></i></a><span class="num gred" v-text="reblog.like_num"></span></span><span class="fragment"><i class="uk-icon-eye blue"></i><span class="num gred" v-text="reblog.read_num"></span></span>
              {% if __user__.admin or __user__.id==blog.user_id %}   
              <a onclick="deleteItem({{blog}})" class="delete" href="javascript:void(0)">删除</a> 
              <a class="edit" href="/manage/blogs/edit?id={{blog.id}}">编辑</a>
              {% endif %}
             <div class="blogcontent">{{ blog.html_content|safe }}</div>
-            <div id="goodbox"><agree-box comment-id="22"></agree-box></div>  
+            
         </article>
 
         <hr class="uk-article-divider">
@@ -183,7 +190,7 @@ new Vue({
                         {{ comment.html_content|safe }}
                     </div>
                     
-                      
+                      <div id="goodbox"><doagree name="agreebox" agreenum="{{comment.agree_num}}" disagreenum="{{comment.disagree_num}}" commentid="{{comment.id}}"></doagree></div>  
                 </article>
                 
             </li>

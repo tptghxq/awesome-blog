@@ -31,7 +31,7 @@ $(function () {
             editor.config.menus = [
         'img'
     ];    editor.config.uploadImgFns.onload = function (resultText, xhr) {
-
+        editor.clear();
         var originalName = editor.uploadImgOriginalName || '';  
         headValues['url']=resultText;
         editor.command(null, 'insertHtml', '<img id="headphoto" src="' + resultText + '" alt="' + originalName + '" style="max-width:100%;"/>');
@@ -56,6 +56,10 @@ console.log('x:'+c.x+' y:'+c.y+' x1:'+c.x2+' y1:'+c.y2+' w:'+c.w+' h:'+c.h+' hh:
     };
                 editor.create();
   $('#uploadhead button').click(function(){
+    if(!headValues.length){
+        showInfo('请拉动鼠标选择作为头像的区域',2)
+        return
+    }
     that=this;
      postJSON('/upload/headphoto',{headValues:headValues},function(err,r){
         if(err){
@@ -66,95 +70,6 @@ console.log('x:'+c.x+' y:'+c.y+' x1:'+c.x2+' y1:'+c.y2+' w:'+c.w+' h:'+c.h+' hh:
         }
      });
   });
-// var params = {
-//     fileInput: $("#fileImage").get(0),
-//     dragDrop: $(".upload_drag_area").get(0),
-//     upButton: $("#fileSubmit").get(0),
-//     url: $("#uploadForm").attr("action"),
-//     filter: function(files) {
-//         var arrFiles = [];
-//         for (var i = 0, file; file = files[i]; i++) {
-//             if (file.type.indexOf("image") == 0) {
-//                 if (file.size >= 512000) {
-//                     alert('您这张"'+ file.name +'"图片大小过大，应小于500k');    
-//                 } else {
-//                     arrFiles.push(file); 
-//                     break;   
-//                     // 上传一张
-//                 }           
-//             } else {
-//                 alert('文件"' + file.name + '"不是图片。');    
-//             }
-//         }
-//         return arrFiles;
-//     },
-//     onSelect: function(files) {
-//         var html = '', i = 0;
-//         $(".upload_preview").html('<div class="upload_loading"></div>');
-//         var funAppendImage = function() {
-//             file = files[i];
-//             if (file) {
-//                 var reader = new FileReader()
-//                 reader.onload = function(e) {
-//                     html = html + '<div id="uploadList_'+ i +'" class="upload_append_list"><p>'+ 
-//                         '<a href="javascript:" class="upload_delete" title="删除" data-index="'+ i +'">X</a><br />' +
-//                         '<img id="uploadImage_' + i + '" src="' + e.target.result + '" class="upload_image" /></p>'+ 
-//                         '<span id="uploadProgress_' + i + '" class="upload_progress"></span>' +
-//                     '</div>';
- 
-//                     i++;
-//                     funAppendImage();
-//                 }
-//                 reader.readAsDataURL(file);
-//             } else {
-//                 $(".upload_preview").html(html);
-//                 if (html) {
-//                     //删除方法
-//                     $(".upload_delete").click(function() {
-//                         ZXXFILE.funDeleteFile(files[parseInt($(this).attr("data-index"))]);
-//                         return false;   
-//                     });
-//                     //提交按钮显示
-//                     $("#fileSubmit").show();    
-//                 } else {
-//                     //提交按钮隐藏
-//                     $("#fileSubmit").hide();    
-//                 }
-//             }
-//         };
-//         funAppendImage();       
-//     },
-//     onDelete: function(file) {
-//         $("#uploadList_" + file.index).fadeOut();
-//     },
-//     onDragOver: function() {
-//         $(this).addClass("upload_drag_hover");
-//     },
-//     onDragLeave: function() {
-//         $(this).removeClass("upload_drag_hover");
-//     },
-//     onProgress: function(file, loaded, total) {
-//         var eleProgress = $("#uploadProgress_" + file.index), percent = (loaded / total * 100).toFixed(2) + '%';
-//         eleProgress.show().html(percent);
-//     },
-//     onSuccess: function(file, response) {
-//         $("#uploadInf").append("<p>头像设置成功</p>");
-//     },
-//     onFailure: function(file) {
-//         $("#uploadInf").append("<p>图片" + file.name + "上传失败！</p>");  
-//         $("#uploadImage_" + file.index).css("opacity", 0.2);
-//     },
-//     onComplete: function() {
-//         //提交按钮隐藏
-//         $("#fileSubmit").hide();
-//         //file控件value置空
-//         $("#fileImage").val("");
-//         // $("#uploadInf").append("<p>当前图片全部上传完毕，可继续添加上传。</p>");
-//     }
-// };
-// ZXXFILE = $.extend(ZXXFILE, params);
-// ZXXFILE.init();
-
 
 	if(!'{{__user__.id}}'){
         window.location.replace('/');
@@ -174,7 +89,7 @@ console.log('x:'+c.x+' y:'+c.y+' x1:'+c.x2+' y1:'+c.y2+' w:'+c.w+' h:'+c.h+' hh:
                         if(n==3){
                             $('.wangEditor-container').show();
                         }
-                        // else{editor.destroy();}        
+                         
                 }
         }
     });
@@ -214,15 +129,6 @@ var pw = new Vue({
             	}
         	}
         });
-    var tx =new Vue({el:"#tx",data:{
-            tupian:''},methods:{submit:function(event){
-                 event.preventDefault();
-                 that=this;
-                 var $form=$("#tx");
-                 $form.postJSON('api/upload',{})
-            }
-
-            }});
 
     });
 
@@ -236,14 +142,14 @@ var pw = new Vue({
 	<div class="setting">
 	<div class="subnav setsubnav">
 		<ul>
-    		<li><a v-class="state==1?'active':''" v-on="click:change('#base',1)">基本设置</a></li>
-    		<li><a v-class="state==2?'active':''" v-on="click:change('#pw',2)">修改密码</a></li>
-            <li><a v-class="state==3?'active':''" v-on="click:change('#uploadhead',3)">上传头像</a></li>	
+    		<li><a :class="state==1?'active':''" v-on:click="change('#base',1)">基本设置</a></li>
+    		<li><a :class="state==2?'active':''" v-on:click="change('#pw',2)">修改密码</a></li>
+            <li><a :class="state==3?'active':''" v-on:click="change('#uploadhead',3)">上传头像</a></li>	
 		</ul>
     </div>
     <div>
 
-		<form id="base" v-on="submit: submit" class="formstyle1 toggle">
+		<form id="base" v-on:submit="submit" class="formstyle1 toggle">
                 <div class="box">
                     <input class="input1" v-model="name" type="text" maxlength="16" placeholder="{{__user__.name}}">
                     <input class="input2" v-model="email" type="text" maxlength="16" placeholder="{{__user__.email}}">
@@ -253,7 +159,7 @@ var pw = new Vue({
         </div>  
         </form>       		
 	
-	<form id="pw" v-on="submit: submit" class="formstyle1 toggle" enctype="multipart/form-data">   
+	<form id="pw" v-on:submit="submit" class="formstyle1 toggle" enctype="multipart/form-data">   
                 <div class="box">
                     <input v-model="oldPassword" type="password" maxlength="16" placeholder="旧密码" class="input1">
 
@@ -285,7 +191,7 @@ var pw = new Vue({
                     </div>
                 </form>   -->
                 <div class="toggle box" id="uploadhead">
-                <div  id="headphotobox"></div> 
+                <div id="headphotobox"><p>请拉取合适区域作为头像...</p></div> 
                 <button class="blue_button">上传头像</button>
                 </div>
                
