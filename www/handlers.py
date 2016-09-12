@@ -14,7 +14,7 @@ from aiohttp import web
 from coroweb import get, post
 from apis import Page, APIValueError,APIPermissionError,APIResourceNotFoundError,APIError
 
-from models import User, Comment, Blog, Follow,Appreciate,Conversation,next_id
+from models import User, Comment, Blog,Agree, Follow,Appreciate,Conversation,next_id
 from config import configs
 
 
@@ -213,6 +213,27 @@ def getfirstblogphoto(*,url):
     newUrl='/static/img/'+newname
     return {'url':newUrl}
 
+@post('/upload/headphoto')
+def saveheadphoto(request,*,headValues):
+    user=request.__user__
+    if user is None:
+        raise APIPermissionError('请登录后上传头像')
+    oldname=headValues['url'].split('/')[-1]
+    newname=next_id()+headValues['url'][headValues['url'].find('.'):]
+    logging.info(oldname,newname)
+    fpath = os.path.join(os.path.join(os.path.join(os.path.abspath('.'),'static'),'img'),oldname)
+    tpath = os.path.join(os.path.join(os.path.join(os.path.abspath('.'),'static'),'img'),newname)
+    im = Image.open(fpath)
+    size=(headValues['w'],headValues['h'])
+    im.thumbnail(size)
+    box = (headValues['x'],headValues['y'],headValues['x2'],headValues['y2'])
+    newim = im.crop(box)
+    newim.thumbnail((100,100))
+    newim.save(tpath)
+    user.image='/static/img/'+newname
+    yield from user.update()
+    return{'message':1}
+
 @post('/api/getallblogs')
 def getallblogs(*,page='1',order='read_num desc'):
     items = yield from findAllBlogs(page,order)
@@ -332,6 +353,10 @@ def get_blog(id):
     for c in comments:
         c.html_content = c.content
     blog.html_content = blog.content
+    if blog.image is None:
+        blog.image=""
+    if blog.summary is None:
+        blog.summary=""
     return {
         '__template__': 'blog.html',
         'blog': blog,
@@ -341,7 +366,7 @@ def get_blog(id):
 def doLikeBlog(request,*,blog_id,op):
     user = request.__user__
     if user is None:
-        raise APIPermissionError('登陆后再点哦')
+        raise APIPermissionError('请登陆后再喜欢哦')
     appreciate=yield from Appreciate.find(user.id,'user_id',blog_id,'blog_id')
     blog=yield from Blog.find(blog_id)
     if blog is None:
@@ -363,6 +388,67 @@ def doLikeBlog(request,*,blog_id,op):
          yield from blog.update()
         return {'message':0,'reblog':blog}        
 
+# state:当前状态 0代表踩，1代表赞；op:动作 1代表查看 2代表点赞按钮 3代表点踩按钮
+@post('/api/agree')
+def doagree(request,*,comment_id,op):
+    user = request.__user__
+    if user is None:
+        raise APIPermissionError('请登陆后再赞哦')
+    agree=yield from Agree.find(user.id,'user_id',comment_id,'comment_id')
+    comment=yield from Comment.find(comment_id)
+    if comment is None:
+        raise APIResourceNotFoundError('没有这条评论')
+    if comment.user_id == user.id:
+        raise APIPermissionError('不能对自己的评论操作')
+    if agree is None:
+        # 查看是否点赞
+        if op==1: 
+            message=1         
+        # 点赞
+        if op==2:     
+            agree2=Agree(user_id=user.id,comment_id=comment_id,state=1)
+            yield from agree2.save()
+            comment.agree_num=comment.agree_num+1
+            yield from comment.update()
+            message=2
+        if op==3:
+            agree3=Agree(user_id=user.id,comment_id=comment_id,state=0)
+            yield from agree3.save()
+            comment.agree_num=comment.agree_num-1
+            yield from comment.update()
+            message=3
+    if agree:
+        if op==1:
+            if agree.state==1:
+                message=2
+            else:
+                message=3
+        if op==2:
+            if agree.state==1:
+                yield from agree.remove()
+                comment.agree_num=comment.agree_num-1
+                yield from comment.update()
+                message=1
+            else:
+                agree.state==1
+                yield from agree.update()
+                comment.agree_num=comment.agree_num+2
+                yield from comment.update()
+                message=2
+        if op==3:
+            if agree.state==0:
+                yield from agree.remove()
+                comment.agree_num=comment.agree_num+1
+                yield from comment.update()
+                message=1
+            else:
+                agree.state==0
+                yield from agree.update()
+                comment.agree_num=comment.agree_num-2
+                yield from comment.update()
+                message=3
+    return{'message':message,'agreenum':comment.agree_num}
+
 @get('/register')
 def register():
     return {
@@ -383,7 +469,8 @@ def change():
 
 @post('/api/follow')
 def follow(request,*,ownerid,state):
-    fromid=request.__user__.id
+    user=request.__user__
+    fromid=user.id
     if fromid is None:
         raise APIPermissionError("请登录后关注")
     num = yield from Follow.findNumber('count(id)','from_user_id=\''+fromid+'\' and to_user_id=?',ownerid)
@@ -392,10 +479,23 @@ def follow(request,*,ownerid,state):
     if num:
         follow=yield from Follow.find(fromid,'from_user_id',ownerid,'to_user_id')
         yield from follow.remove()
+        if user.following_num>0:
+            user.following_num=user.following_num-1
+            yield from user.update()
+        touser=yield from User.find(ownerid)
+        if touser.follower_num>0:
+            touser=yield from User.find(ownerid)
+            touser.follower_num=touser.follower_num+1
+            yield from touser.update()
         return dict(message=0)
     else:
         follow=Follow(from_user_id=fromid,to_user_id=ownerid)
         yield from follow.save()
+        user.following_num=user.following_num+1
+        yield from user.update()
+        touser=yield from User.find(ownerid)
+        touser.follower_num=touser.follower_num+1
+        yield from touser.update()
         return dict(message=1)
 
 @post('/api/authenticate')
@@ -558,7 +658,7 @@ def api_create_blog(request, *, name, summary, content,image):
 
     argsList={'user_id':request.__user__.id,'user_name':request.__user__.name,'user_image':request.__user__.image,'name':name.strip(),'content':content.strip()}
     if image:
-        argsList['image']=image
+        argsList['image']=image 
     if summary:
         argsList['summary']=summary
     blog = Blog(**argsList)
@@ -580,7 +680,7 @@ def api_update_blog(id, request, *, name, summary, content,image):
         if image:
             blog.image=image
         if summary:
-            blog.summary=summary
+            blog.summary=summary  
         yield from blog.update()
         return blog
     else:

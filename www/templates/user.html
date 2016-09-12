@@ -54,9 +54,13 @@ var pagination=new Vue({el:".pagination2",data:{
 <div class="ablog">
 <div class="userbox" id="vm">
         
-            <img class="uk-border-circle" width="120" height="120" src="{{ user.image }}">
+            <img width="120" class="round" height="120" src="{{ user.image }}">
             <h2>{{ user.name }}</h2>
-            <button v-on="click: followuser('change')" v-if="{{__user__}} && '{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" v-class="message?'undobutton':'dobutton'" v-text="message?'取关':'关注'"></botton><div><div><a href=""><p>关注</p><p>num</p></a></div><div><a href=""><p>粉丝</p><p>num</p></a></div></div>
+            <button v-on="click: followuser('change')" v-if="'{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" v-class="message?'undobutton':'dobutton'" v-text="message?'取关':'关注'"></botton>
+<!--             <div id="follownumbox">
+           <div><a><p>关注</p><p>11</p></a></div>
+           <div><a><p>粉丝</p><p>13</p></a></div>
+           </div> -->
        
 </div>
 <div class="bloglist">

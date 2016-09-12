@@ -140,6 +140,10 @@ a.disabled,button.disabled {
   background-color: #fefefe;
   color: #011122;
 }
+.borderbutton .active{
+  background-color: #fefefe;
+  color: #011122;
+}
 .circlebutton{
   cursor: pointer;
 
@@ -848,6 +852,7 @@ background-color: none;
   margin-top: 70px;
   display: flex;
   justify-content: center;
+
 }
 .pagination2 li a{
 border: 2px solid #191919;
@@ -880,6 +885,10 @@ padding: 0 100px;
 position: relative;
 text-align: center;
 display: flex;
+}
+#follownumbox{
+  color:#212331;
+  flex: 0 0 20%
 }
 .ablog{
   display: flex;
@@ -1157,4 +1166,37 @@ min-height: 300px;
   resize:none;
   position:relative;
   height:500px;
+}
+#uploadhead{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  text-align: center;
+  align-items: center;
+  min-height: 700px;
+}
+#uploadhead .blue_button{
+margin-top: 50px;
+  height: 60px;
+  width: 250px;
+}
+.toggle{
+  display: none;
+}
+.round{
+  border-radius: 50%;
+  border: 2px solid #122123;
+  padding: 2px;
+}
+.agreebox{
+  position: relative;
+  top:-200px;
+  left: -150px;
+  width: 100px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: black;
 }

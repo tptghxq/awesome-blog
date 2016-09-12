@@ -6,7 +6,7 @@
 
 <script>
 $(function() {
-     if('{{__user__}}'=='Nope'){
+     if(!'{{__user__.id}}'){
          window.location.replace('/');
      }
     $('#vm').show();
@@ -112,7 +112,7 @@ $(function() {
 
 
 
-        <a v-if="{{__user__}}" href="/manage/blogs/create" class="borderbutton"><i class="uk-icon-plus"></i> 新日志</a>
+        <a v-if="'{{__user__.id}}'" href="/manage/blogs/create" class="borderbutton"><i class="uk-icon-plus"></i> 新日志</a>
 
         <table class="uk-table uk-table-hover optable">
             <thead>
@@ -144,7 +144,7 @@ $(function() {
                     <td>
                         <span v-text="item.created_at.toDateTime()"></span>
                     </td>
-                    <td v-if="{{__user__}}.admin==1 || (table!='users' && item.user_id=={{__user__}}.id)">
+                    <td v-if="{{__user__.admin}}==1 || (table!='users' && item.user_id=='{{__user__.id}}')">
                         <a v-if="tablename=='blogs'" href="javascript:void(0);" v-on="click: edit_blog(item)"><i class="uk-icon-edit blue"></i>
                         <a href="javascript:void(0)" v-on="click: delete_item(item,page)"><i class="uk-icon-trash-o blue"></i>
                     </td>
