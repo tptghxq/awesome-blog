@@ -56,7 +56,7 @@ console.log('x:'+c.x+' y:'+c.y+' x1:'+c.x2+' y1:'+c.y2+' w:'+c.w+' h:'+c.h+' hh:
     };
                 editor.create();
   $('#uploadhead button').click(function(){
-    if(!headValues.length){
+    if(headValues['w']==undefined || headValues['h']==undefined){
         showInfo('请拉动鼠标选择作为头像的区域',2)
         return
     }

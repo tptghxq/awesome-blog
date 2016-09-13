@@ -95,10 +95,10 @@ editor.create();
 
 Vue.component('doagree',{
     data:function(){
-         return {agreenum:0,message:'',disagreenum:0}
+         return {agreenum:this.agreenum2,disagreenum:this.disagreenum2}
         },
-    props:['commentid','agreenum','disagreenum'],
-    template:'<div class="agreebox"><button class="borderbutton" v-on:click="opagree(2,$event)" v-text="agreenum"></button><button class="borderbutton" v-on:click="opagree(3,$event)" v-text="disagreenum"></button></div>',
+    props:['commentid','agreenum2','disagreenum2'],
+    template:'<div class="agreebox"><div class="borderbutton agreebutton" v-on:click="opagree(2,$event)" v-text="agreenum"></div><p v-text="message"></p><div class="borderbutton agreebutton" v-on:click="opagree(3,$event)" v-text="disagreenum"></div></div>',
     methods:{
     opagree:function(op,event){
     $(event.target).addClass('disabled'); 
@@ -115,7 +115,7 @@ Vue.component('doagree',{
 }
     }
 });
-var agree = new Vue({
+new Vue({
   el: '#allcomment'
 });
        
@@ -178,7 +178,10 @@ var agree = new Vue({
             {% for comment in comments %}
             <li id="{{comment.id}}">
             <!-- 评论书签 -->
-                <article class="uk-comment"><a name="{{comment.id}}" class="disabled" href="javascript:void(0)"></a>
+
+                <article class="uk-comment">
+ <doagree name="agreebox" agreenum2="{{comment.agree_num}}" disagreenum2="{{comment.disagree_num}}" commentid="{{comment.id}}"></doagree>
+                <a name="{{comment.id}}" class="disabled" href="javascript:void(0)"></a>
                     <header class="uk-comment-header comment-header">
                     <a href="/user/{{comment.user_name}}">
                         <img class="uk-comment-avatar uk-border-circle" width="50" height="50" src="{{ comment.user_image }}"></a>
@@ -190,7 +193,7 @@ var agree = new Vue({
                         {{ comment.html_content|safe }}
                     </div>
                     
-                      <div id="goodbox"><doagree name="agreebox" agreenum="{{comment.agree_num}}" disagreenum="{{comment.disagree_num}}" commentid="{{comment.id}}"></doagree></div>  
+                        
                 </article>
                 
             </li>

@@ -9,11 +9,15 @@
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/sha1.min.js"></script>
     <script src="/static/js/uikit.min.js"></script>
-    <script src="/static/js/vue.min.js"></script>
+    <script src="/static/js/vue.js"></script>
     <script src="/static/js/awesome.js"></script>
     <script>
 $(function() {
-    $('#signin').show()
+
+  if('{{__user__.name}}'){
+    return window.location.replace('/user/{{__user__.name}}');
+  }
+
     var signin = new Vue({
         el: '#signin',
         data: {
@@ -23,6 +27,12 @@ $(function() {
         methods: {
             submit: function(event) {
                 event.preventDefault();
+                if (! validateEmail(this.email.trim().toLowerCase())) {
+                    return showInfo('请输入正确的Email地址',1);
+                }
+                if (this.passwd.length < 6) {
+                    return showInfo('口令长度至少为6个字符',1);
+                }
                 var
                     $form = $('#signin'),
                     email = this.email.trim().toLowerCase(),
@@ -31,7 +41,7 @@ $(function() {
                         passwd: this.passwd==='' ? '' : CryptoJS.SHA1(email + ':' + this.passwd).toString()
                     };
                 $form.postJSON('/api/authenticate', data, function(err, result) {
-                    if(!err) {location.assign('/');}
+                    if(!err) {location.replace('/');}
                 });
             }
         }
@@ -41,8 +51,8 @@ $(function() {
 
     </script>
 </head>
-<body style="background:#252527;">
-            <form id="signin" v-on="submit: submit" class="login_d">
+<body style="background:#252527;height:100%;">
+            <form id="signin" v-on:submit="submit" class="login_d">
             <h2 class="little-big-header">Log in!</h2>
                  <div class="login_con"> 
                  <input v-model="email" name="email" type="text" placeholder="电子邮件" maxlength="50" class="input1">
@@ -55,7 +65,7 @@ $(function() {
                     <button type="submit" class="blue_button">登录</button>
                 </div>
                 <div class="login_con" style="background:none;">
-            <a id="register_a" v-on="state=1" href="/register">没有账号？马上注册。</a>
+            <a id="register_a" href="/register">没有账号？马上注册。</a>
                 </div>        
             </form>
 </body>

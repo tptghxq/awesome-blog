@@ -20,7 +20,21 @@
 
     <script src="/static/js/awesome.js"></script>
     <script src="/static/dist/js/wangEditor.min.js"></script>
-    <script>Vue.config.debug = true</script>
+    <script>
+    $(function(){
+            Vue.config.debug = true;
+var userhead = new Vue({
+    el:"#usera",
+    data:{
+        classObject:{
+            'ahover1':'{{__user__.image}}'=='/static/img/user.png'
+        }
+    }
+});
+    });
+
+
+    </script>
    <!--  <script src="/static/js/getnewsnum.js"></script> -->
     {% block beforehead %}<!-- before head  -->{% endblock %}
 </head>
@@ -38,8 +52,14 @@
             <div  class="nav nav1 nav-element">
                 <ul>
                 {% if __user__ %}
-                    <li>
-                        <a class="hoverline" href="/user/{{__user__.name}}"><i class="uk-icon-user"></i> {{ __user__.name }}</a>
+                    <li id="usera">
+                        <a class="userhead" v-bind:class="classObject" href="/user/{{__user__.name}}">
+                        {% if __user__.image !='/static/img/user.png'%}
+                        <img src="{{__user__.image}}" class="round" style="height:60px;width:auto;left:0,z-index:5">
+                        {%else%}
+                        <i class="uk-icon-user"></i> {{ __user__.name }}
+                          {%endif%}
+                          </a>
                             <ul><li><a href="/manage/blogs/create">写博客</a></li>
                                 <li><a href="/setting">设置</a></li>
                                 <li><a href="/service/dialogue">对话</a></li>
@@ -47,8 +67,8 @@
                             </ul>
                     </li>
                 {% else %}
-                    <li><a href="/signin"><i class="user-stuff hoverline"></i> 登陆</a></li>
-                    <li><a href="/register"><i class="user-stuff hoverline"></i> 注册</a></li>
+                    <li><a class="ahover1" href="/signin"><i class="user-stuff"></i> 登陆</a></li>
+                    <li><a class="ahover1" href="/register"><i class="user-stuff"></i> 注册</a></li>
                 {% endif %}
                 </ul>
                 </div>

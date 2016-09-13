@@ -61,6 +61,8 @@ class Follow(Model):
     __table__ = 'follows'
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
     from_user_id = StringField(ddl='varchar(50)')
+    from_user_name = StringField(ddl='varchar(50)')
+    to_user_name = StringField(ddl='varchar(50)')
     to_user_id = StringField(ddl='varchar(50)')
     created_at = FloatField(default=time.time)
 

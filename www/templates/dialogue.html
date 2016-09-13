@@ -65,7 +65,8 @@
                 }
                 var $form = $('#dia').find('form');
                 that=this;
-                 this.content = this.editor.$txt.html();
+                // 去除富文本尾部添加标签
+                 this.content = handleHtml(this.editor.$txt.html(),'<p><br></p>');
                 $form.postJSON('/api/dialogue/save',{content:that.content,friendId:that.opfriendId}, function (err, r) {
                     if (!err) {
                         if(r.message){

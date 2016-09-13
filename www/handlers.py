@@ -266,20 +266,20 @@ def getlike(request,*,page='1'):
 
 
 @post('/api/focus/users')
-def getFocusUsers(request,*,page='1'):
+def getRelationsUsers(request,*,page='1'):
     fromuser = request.__user__
     if request.__user__ is None:
         raise APIPermissionError("请登录")
     follows = yield from Follow.findAll('from_user_id=? or to_user_id=?',[fromuser.id,fromuser.id])
+    if len(follows) ==0:
+        raise APIError('没有关注的人')
     page_index = get_page_index(page)
-    # to_user_ids = [follow.to_user_id for follow in follows]
     user_ids=[]
     for follow in follows:
         if(follow.from_user_id==fromuser.id):
             user_ids.append(follow.to_user_id)
         else:
             user_ids.append(follow.from_user_id)
-
     where='id in ('+','.join(len(user_ids)*'?')+')'
     num= yield from User.findNumber('count(id)',where,user_ids)
     page = Page(num,page_index)
@@ -316,18 +316,19 @@ def getFocusBlogs(request,*,page='1'):
         blogs = []
     else:
         blogs = yield from Blog.findAll(where,to_user_ids,orderBy='created_at desc', limit=(page.offset, page.limit))
-        return {
-        'blogs':blogs,
-        'page':page
-        }
+    return {
+    'blogs':blogs,
+    'page':page
+    }
         
 
 
 @get('/user/{name}')
-def user(name,*,page='1'):
+def getuser(name,*,page='1'):
     user = yield from User.find(name,'name')
     if user is None:
         raise APIValueError('404')
+    user.passwd='******'
     page_index = get_page_index(page)
     num = yield from Blog.findNumber('count(id)','user_name=?',name)
     page = Page(num,page_index)
@@ -343,13 +344,81 @@ def user(name,*,page='1'):
         'user':user
     }
 
+@get('/user/{name}/follower')
+def getFollower(name,*,page='1'):
+    user = yield from User.find(name,'name')
+    if user is None:
+        raise APIValueError('不存在这个用户')
+    user.passwd='******'  
+    follows = yield from Follow.findAll('to_user_id=?',[user.id],orderBy='created_at desc')
+    if len(follows) == 0:
+        page=Page(0,1)
+        return {
+        '__template__': 'user.html',
+        'page': page,
+        'followers': [],
+        'user': user
+        }
+    from_user_ids = [follow.from_user_id for follow in follows]
+    where='id in ('+','.join(len(from_user_ids)*'?')+')'
+    num = yield from User.findNumber('count(id)',where,from_user_ids)
+    page_index = get_page_index(page)
+    page = Page(num,page_index)
+    if num == 0:
+        followers = []
+    else:
+        followers = yield from User.findAll(where,from_user_ids,orderBy='created_at desc', limit=(page.offset, page.limit))
+        for follower in followers:
+            follower.password="******"
+            logging.info(follower.name)
+    return {
+        '__template__': 'user.html',
+        'page': page,
+        'followers': followers,
+        'user': user
+    }
+
+@get('/user/{name}/following')
+def getFollowing(name,*,page='1'):
+    user = yield from User.find(name,'name')
+    if user is None:
+        raise APIValueError('不存在这个用户')
+    user.passwd='******'
+    follows = yield from Follow.findAll('from_user_id=?',[user.id],orderBy='created_at desc')
+    if len(follows) == 0:
+        page=Page(0,1)
+        return {
+        '__template__': 'user.html',
+        'page': page,
+        'followers': [],
+        'user': user
+        }
+    to_user_ids = [follow.to_user_id for follow in follows]
+    where='id in ('+','.join(len(to_user_ids)*'?')+')'
+    num= yield from User.findNumber('count(id)',where,to_user_ids)
+    page_index = get_page_index(page)
+    page = Page(num,page_index)
+    if num == 0:
+        followings = []
+    else:
+        followings = yield from User.findAll(where,to_user_ids,orderBy='created_at desc', limit=(page.offset, page.limit))
+        for following in followings:
+            user.password="******"
+    return {
+        '__template__': 'user.html',
+        'page': page,
+        'followings': followings,
+        'user':user
+    }
+
+
 
 @get('/blog/{id}')
 def get_blog(id):
     blog = yield from Blog.find(id)
     blog.read_num=blog.read_num+1
     yield from blog.update()
-    comments = yield from Comment.findAll('blog_id=?', [id], orderBy='created_at desc')
+    comments = yield from Comment.findAll('blog_id=?', [id], orderBy='agree_num desc')
     for c in comments:
         c.html_content = c.content
     blog.html_content = blog.content
@@ -362,6 +431,8 @@ def get_blog(id):
         'blog': blog,
         'comments': comments
     }
+
+
 @post('/api/likeblog')
 def doLikeBlog(request,*,blog_id,op):
     blog=yield from Blog.find(blog_id)
@@ -475,32 +546,32 @@ def change():
     }
 
 @post('/api/follow')
-def follow(request,*,ownerid,state):
+def follow(request,*,ownerId,ownerName,state):
     user=request.__user__
     fromid=user.id
     if fromid is None:
         raise APIPermissionError("请登录后关注")
-    num = yield from Follow.findNumber('count(id)','from_user_id=\''+fromid+'\' and to_user_id=?',ownerid)
-    if state == 'check':
+    num = yield from Follow.findNumber('count(id)','from_user_id=\''+fromid+'\' and to_user_id=?',ownerId)
+    if state == 0:
         return dict(message=num)
     if num:
-        follow=yield from Follow.find(fromid,'from_user_id',ownerid,'to_user_id')
+        follow=yield from Follow.find(fromid,'from_user_id',ownerId,'to_user_id')
         yield from follow.remove()
         if user.following_num>0:
             user.following_num=user.following_num-1
             yield from user.update()
-        touser=yield from User.find(ownerid)
+        touser=yield from User.find(ownerId)
         if touser.follower_num>0:
-            touser=yield from User.find(ownerid)
-            touser.follower_num=touser.follower_num+1
+            touser=yield from User.find(ownerId)
+            touser.follower_num=touser.follower_num-1
             yield from touser.update()
         return dict(message=0)
     else:
-        follow=Follow(from_user_id=fromid,to_user_id=ownerid)
+        follow=Follow(from_user_id=fromid,to_user_id=ownerId,from_user_name=user.name,to_user_name=ownerName)
         yield from follow.save()
         user.following_num=user.following_num+1
         yield from user.update()
-        touser=yield from User.find(ownerid)
+        touser=yield from User.find(ownerId)
         touser.follower_num=touser.follower_num+1
         yield from touser.update()
         return dict(message=1)

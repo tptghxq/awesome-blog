@@ -2,6 +2,7 @@
 display:none;
 }
 */
+
 html,body {
 	font-size: 15px;
 }
@@ -132,6 +133,7 @@ a.disabled,button.disabled {
     width: 100px;
     background: none;
     color: #fff;
+    text-align: center;
     border-radius: 0px;
     border: 2px solid #fefefe;
     padding: 7px 10px;
@@ -143,6 +145,9 @@ a.disabled,button.disabled {
 .borderbutton .active{
   background-color: #fefefe;
   color: #011122;
+}
+.agreebutton {
+  width: 50px;
 }
 .circlebutton{
   cursor: pointer;
@@ -204,9 +209,6 @@ position: relative;
 .main-header {
 display: flex;display: -webkit-flex;
 background-color: #111;
-border-bottom-color: #2b2b2b;
-border-bottom-style: solid;
-border-bottom-width: 1px;
 box-sizing: border-box;
 color: #FFF;
 font-size: 12px;
@@ -299,23 +301,14 @@ min-height: 600px;
 padding-top: 150px;
 }
 /* All */
-.nav {
-position: absolute;
-right: 0;
-}
-.nav ul {
-  display: flex;display: -webkit-flex;
-  *zoom: 1;
-  list-style: none;
 
-}
 
-.nav ul:after {
-  clear: both;
-}
-.nav ul > li {
-  font-size: 15px;
-height: 65px;
+.userhead{  
+  width: 100%;
+  height: 100%;
+  background-color: none;
+
+
 }
 .hoverline:hover:after {
     background-color: #00A5E2;
@@ -326,41 +319,75 @@ height: 65px;
    left: 0;
    position: absolute;
 }
-.nav a {
-  background: #1b1b1b;
-  display: block;
-  padding: 0px 30px;
-  color: #fff;
+.ahover1{
+   background-color: none;
+   color: #fff;
+   width: auto;
+   height: auto;
+   padding: 20px;
+   position: relative;
 }
-.nav a:hover {
-  text-decoration: none;
-  background: #595959;
-  color: #fff;
+.ahover1:hover{
+  border-radius: 0.3em;
+  background-color: #00A5E2;
+  color: #f0f0f0;
 }
-.nav li ul {
-  display: block;
-  background: #273754;
+.nav {
+position: absolute;
+right: 0;
 }
-.nav li ul li {
-  width: 190px;
+
+.nav > ul {
+  *zoom: 1;
+  list-style: none;
+display: flex;
+justify-content: flex-end;
+border-radius: 0.5em;
 
 }
-.nav li ul a {
+
+.nav ul:after {
+  clear: both;
+}
+.nav ul > li { 
+  font-size: 15px;
+  vertical-align: center;
+max-height: 65px;
+
+background-color: none;
+}
+
+.nav li ul li {
+  width: 180px;
+
+}
+.nav li ul li a {
   border: none;
-  padding-left: 40px;
+  padding:0 2em;
+  outline: none;
+  margin: 0;
+
+    background: #0D0D0D;
+  display: block;
+  color: #fff;
 }
 .nav li ul a:hover {
   background: #545456;
+  text-decoration: none;
+}
+.nav1{
+  margin-right: 0.4em;
 }
 .nav1 ul > li:hover ul {
   display: block;
+
 }
 .nav1 li ul {
   position: absolute;
-  height: 25px;
+margin: 0;
   display: none;
   right: 0;
-  top: 65px;
+
   z-index: 1;
   float: none;
 }
@@ -751,13 +778,13 @@ background: #f1f1f1;
   background: none;
   color: rgba(232,16,16,0.8);
   padding: 5px 5px;
-  border: 2px solid rgba(232,16,16,0.8); 
+  border: 2px solid #a43424; 
   border-radius:50px;
   width: 50px;
 }
 .dobutton:hover{
   color: #fff;
-  background-color: rgba(232,16,16,0.8);
+  background-color: #a43424;
 }
 .undobutton{
   font-size: 13px;
@@ -847,28 +874,37 @@ background-color: none;
     background-color: #fff;
   color: #191919;
 }
-
+.pagebox{
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  left: 0;
+ 
+}
 .pagination2{
-  margin-top: 70px;
+  
+  bottom:-100px;
+  position: relative;
+  margin-top: 100px;
   display: flex;
   justify-content: center;
 
 }
 .pagination2 li a{
-border: 2px solid #191919;
+border: 2px solid #fefefe;
 border-radius: 0;
 padding: 5px 10px;
-margin:0 0.3em; 
-color: #191919;
+margin:1em 0.3em; 
+color: #fefefe;
 background-color: none;
 }
 .pagination2 li a:hover{
-  background-color: #191919;
-  color: #fff;
+  background-color: #fdfdfd;
+  color: #132211;
 }
 .pagination2 li a.active{
-  background-color: #191919;
-  color: #fff;
+  background-color: #fdfdfd;
+  color: #132211;
 }
 
 .editcontainer{
@@ -888,7 +924,38 @@ display: flex;
 }
 #follownumbox{
   color:#212331;
-  flex: 0 0 20%
+
+  display:flex;
+  justify-content: center;
+}
+#follownumbox >div{
+
+position: relative;
+}
+#follownumbox a{
+
+  display: block;
+  color: #252527;
+  width: 50px;
+  padding:  15px 5px;
+  margin: 0 5px;
+  margin-bottom:20px; 
+}
+#follownumbox a:hover{
+  color: #4FC08D
+}
+.rightline:after {
+   background-color: #00A5E2;
+   height: 60%;
+   width: 1px;
+   top: 0;
+   content: "";
+   right: 0;
+   position: absolute;
+}
+#follownumbox span{
+  display: flex;
+  justify-content: center;
 }
 .ablog{
   display: flex;
@@ -911,6 +978,8 @@ align-items: flex-start;
  border-radius: 0.2rem;
 }
 .bloglist .title{
+  padding: 0.9em 0;
+
   color: #132123;
   font-size: 16px;
   width: 100%;
@@ -1185,18 +1254,47 @@ margin-top: 50px;
 }
 .round{
   border-radius: 50%;
-  border: 2px solid #122123;
+  border: 2px solid #888787;
   padding: 2px;
 }
+.round:hover{
+  border: 2px solid #0089BC;
+}
 .agreebox{
-  position: relative;
-  top:-200px;
-  left: -150px;
-  width: 100px;
+position: relative;
 
+  left: -100px;
+  width: 0px;
+height: 0px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   color: black;
+}
+
+
+.infobox{
+  
+  margin-left: 50px;
+}
+.infobox a{
+  color: #888787;
+}
+.infobox a:hover{
+   color: #010234;
+}
+.userslist{
+padding:0 20px;
+margin: 0;
+}
+.oneuser{
+  padding: 20px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+}
+.specbutton{
+  flex: 0 0 20%;
 }

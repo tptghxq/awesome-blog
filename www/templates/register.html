@@ -9,13 +9,10 @@
     <script src="/static/js/jquery.min.js"></script>
     <script src="/static/js/sha1.min.js"></script>
     <script src="/static/js/uikit.min.js"></script>
-    <script src="/static/js/vue.min.js"></script>
+    <script src="/static/js/vue.js"></script>
     <script src="/static/js/awesome.js"></script>
 <script>
-function validateEmail(email) {
-    var re = /^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$/;
-    return re.test(email.toLowerCase());
-}
+
 
 $(function () {
     var re = new Vue({
@@ -61,8 +58,8 @@ $(function () {
 </script>
 
 </head>
-<body style="background:#252527;">
-        <form id="re" v-on="submit: submit" class="login_d">
+<body style="background:#252527;height:100%">
+        <form id="re" v-on:submit="submit" class="login_d">
                <h2 class="little-big-header">Register!</h2>
                 <div class="login_con">
                     <input v-model="name" type="text" maxlength="10" placeholder="名字" class="input1">

@@ -11,12 +11,7 @@ var
 
 $(function () {
 
-function handleHtml(html,str){
-    if(html.slice(-str.length)==str){
-        html=html.slice(0,-str.length);
-                }
-    return html;
-}
+
 function initVM(blog) {
     var vm = new Vue({
         el: '#vm',
@@ -120,7 +115,7 @@ function initVM(blog) {
                         firstBlogPhoto=$(this).attr('alt');
                         imageUrl=$(this).attr('src');
                         postJSON('/api/firstphoto',{url:imageUrl},function(err,r){
-                            if(err){showInfo(err);alert(3)}
+                            if(err){showInfo(err);}
                                 else{   
                                 that.image=r.url;
                                 postBlogFirst()
@@ -141,10 +136,10 @@ function initVM(blog) {
                           var $form = $('#vm').find('form');
                 $form.postJSON(action, {name:that.name,summary:that.summary,content:that.content,image:that.image}, function (err, r) {
                     if (err) {
-                        showInfo(err); alert(1);
+                        showInfo(err);
                     }
                     else {
-                        alert(2);
+                       
                          return location.assign('/blog/'+r.id);
                     }
                 });

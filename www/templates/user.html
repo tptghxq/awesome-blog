@@ -7,16 +7,46 @@
 <script>
 $(function () {
     $('#vm').show();
+  var lastName=parsePath(location.pathname);
+var itemslist = new Vue({
+    el:'.bloglist',
+    data:{
+        lastName:lastName
+    }
+});
 var vm  = new Vue({
       el:'#vm',
       data:{
-        message:''
+        message:'',
+        followings:[],
+        followers:[],
+        page:''
       },
       ready: function(){
-                this.followuser('check');
+                this.followuser(0);
         },
       methods:{
-        
+        getfollowings: function(p){
+            that=this;
+            getJSON('/api/list/following',{name:'{{user.name}}',page:p},function(err,r){
+                if(err){showInfo(err)}
+                    else{
+                        that.followings=r.followings;
+                        that.page=r.page;
+                        alert(that.followings);
+                    }
+            })
+        },getfollowers: function(p){
+            that=this;
+            getJSON('/api/list/follower',{name:'{{user.name}}',page:p},function(err,r){
+                if(err){showInfo(err)}
+                    else{
+                        that.followers=r.followers;
+                        that.page=r.page;
+                         alert(that.followers);
+                    }
+            })
+        },
         followuser: function(str){
             if ('{{__user__.name}}' && '{{ user.id }}' != '{{ __user__.id }}') {
                 var $focusButton =$('#focusButton');
@@ -24,19 +54,23 @@ var vm  = new Vue({
                 var $vm = $('#vm');
                 that=this;
                 postJSON('/api/follow',{
-                    ownerid:'{{ user.id }}' ,
+                    ownerId:'{{ user.id }}' ,
+                    ownerName:'{{ user.name }}',
                     state:str
                 },function(err,r){
                     if (!err) {
                             that.message=r.message;
                             $focusButton.removeClass('disabled');
+                           
                     }
                 })
             }
         }
       }
 });
-var pagination=new Vue({el:".pagination2",data:{
+var pagination=new Vue({
+    el:".pagination2",
+    data:{
     pageCodes:getPageCodes('{{page.page_index}}','{{page.page_count}}')},methods:{gotoPage:function(pageCode){
         if(pageCode=='{{page.page_index}}'){
             return;
@@ -45,6 +79,41 @@ var pagination=new Vue({el:".pagination2",data:{
     }
 }
 });
+Vue.component('focusone',{
+
+    data:function(){
+         return {message:0}
+        },
+    props:['userid','username'],
+    template:'<div v-on:click="focussomebody(1)" class="dobutton" v-text="message"></div>',
+    ready:function(){
+        this.focussomebody(0);
+    },
+    methods:{
+        focussomebody:function(op){
+                if ('{{__user__.name}}' && this.userid != '{{ __user__.id }}') {
+                    // $(event.target).addClass('disabled'); 
+                    that=this;
+                    postJSON('/api/follow',{
+                        ownerId:that.userid ,
+                        ownerName:that.username,
+                        state:op
+                    },function(err,r){    
+                        // $(event.target).removeClass('disabled');
+                    if(err){
+                        showInfo(err);
+                    }
+                    else{
+                        that.message=r.message;    
+                        }
+                    });
+                }
+        }
+    }
+});
+ new Vue({
+  el: '.userslist'
+}); 
 });
 </script>
 
@@ -53,25 +122,33 @@ var pagination=new Vue({el:".pagination2",data:{
 {% block content %}
 <div class="ablog">
 <div class="userbox" id="vm">
-        
-            <img width="120" class="round" height="120" src="{{ user.image }}">
-            <h2>{{ user.name }}</h2>
-            <button v-on:click="followuser('change')" v-if="'{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" :class="message?'undobutton':'dobutton'" v-text="message?'取关':'关注'"></botton>
-<!--             <div id="follownumbox">
-           <div><a><p>关注</p><p>11</p></a></div>
-           <div><a><p>粉丝</p><p>13</p></a></div>
-           </div> -->
-       
+<div id="follownumbox">
+           <div>
+           <a href="/user/{{user.name}}/following" class="rightline">
+           <div class="num">{{user.following_num}}</div>
+           <span>关注</span>
+           </a>
+           </div>
+           <div>
+           <a href="/user/{{user.name}}/follower">
+           <div class="num">{{user.follower_num}}</div>
+           <span>粉丝</span>
+           </a>
+           </div>
+</div>
+    <a href="/user/{{user.name}}"><img width="120" class="round" height="120" src="{{ user.image }}"></a>
+    <h2>{{ user.name }}</h2>
+    <button v-on:click="followuser('change')" v-if="'{{ __user__.id }}' &&'{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" :class="message?'undobutton':'dobutton'" v-text="message?'取关':'关注'"></botton>   
 </div>
 <div class="bloglist">
-<div class="uk-article-title">
-			<ul class="uk-breadcrumb">
-                <li class="title">文章列表</li>
-            </ul> 
-</div>
 
+                <div class="title" v-if="lastName=='follower'">粉丝列表</div>
+                <div class="title" v-if="lastName=='following'">关注列表</div>
+                <div class="title" v-if="lastName!='follower'&&lastName!='following'">文章列表</div>
+
+<ul class="articlelist">
     {% for blog in blogs %}
-        <article>
+        <li>
             <h2>
             	<a href="/blog/{{ blog.id }}">
             		{{ blog.name }}
@@ -81,14 +158,55 @@ var pagination=new Vue({el:".pagination2",data:{
             	<span class="fragment smarttime">{{ blog.created_at|datetime }}</span>
             	<span class="fragment">阅读<span class="num">{{blog.read_num}}</span></span>
             	<span class="fragment">喜欢<span class="num">{{blog.like_num}}</span></span>
+                <span class="fragment">评论<span class="num">{{blog.review_num}}</span></span>
             </div>
-        </article>
+        </li>
         <hr class="uk-article-divider">
     {% endfor %}
-
-    <ul class="pagination2">
+</ul>
+    <ul class="userslist">
+{% for follow in followings %}
+        <li class="oneuser">
+        <div style="display:flex">
+             <a href="/user/{{follow.name}}"><img class="round" width="50" height="50" src="{{follow.image}}"></a>
+        <div class="infobox">                      
+                <a href="/user/{{follow.name}}">
+                    {{ follow.name }}
+                </a>  
+            <div>
+               <a href="/user/{{follow.name}}/follower"><span class="fragment">粉丝<span class="num">{{follow.follower_num}}</span></span></a> 
+                <a href="/user/{{follow.name}}/following"><span class="fragment">关注<span class="num">{{follow.following_num}}</span></span></a>
+            </div>
+        </div>
+        </div>
+       <div is="focusone"  userid="{{follow.id}}" username="{{follow.name}}"></div>  
+       <!-- html有些标签有严格规定只能嵌入某些标签  -->      
+       </li>
+{% endfor %}
+{% for follow in followers %}
+        <li class="oneuser">
+        <div style="display:flex">
+             <a href="/user/{{follow.name}}"><img class="round" width="50" height="50" src="{{follow.image}}"></a>
+        <div class="infobox">                      
+                <a href="/user/{{follow.name}}">
+                    {{ follow.name }}
+                </a>  
+            <div>
+               <a href="/user/{{follow.name}}/follower"><span class="fragment">粉丝<span class="num">{{follow.follower_num}}</span></span></a> 
+                <a href="/user/{{follow.name}}/following"><span class="fragment">关注<span class="num">{{follow.following_num}}</span></span></a>
+            </div>
+        </div>
+        </div>       
+         <div is="focusone"  userid="{{follow.id}}" username="{{follow.name}}"></div>  
+       <!-- html有些标签有严格规定只能嵌入某些标签  -->      
+       </li>
+{% endfor %}
+</ul>
+    <div class="pagebox"><ul class="pagination2">
             <li v-for="pageCode in pageCodes"><a :class="pageCode=={{page.page_index}}?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
         </ul>
+</div>
+
 </div>
 
 

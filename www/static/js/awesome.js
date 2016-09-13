@@ -542,3 +542,21 @@ function showInfo(info,op) {
                     });
                 }
             }
+// 去除富文本尾部添加标签
+function handleHtml(html,str){
+    if(html.slice(-str.length)==str){
+        html=html.slice(0,-str.length);
+                }
+    return html;
+}
+
+function validateEmail(email) {
+    var re = /^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$/;
+    return re.test(email.toLowerCase());
+}
+
+function parsePath(path) {
+names=path.split('/');
+lastname=names[names.length-1];
+return lastname;
+}
