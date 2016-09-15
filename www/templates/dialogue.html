@@ -107,7 +107,7 @@
    <div class="contentbox">
             <div v-for="dialogue in dialogues" :class="dialogue.from_user_id!='{{__user__.id}}'?'otherwordbox':'mywordbox'">
             <div :class="dialogue.from_user_id!='{{__user__.id}}'?'otherwordsandname':'mywordsandname'">
-                <div class="othername" v-if="dialogue.from_user_id!='{{__user__.id}}'"><a :href="'/user/'+opfriend.name"><img class="uk-comment-avatar uk-border-circle" width="50" height="50" :src="opfriend.image"></a></div>
+                <div class="othername" v-if="dialogue.from_user_id!='{{__user__.id}}'"><a :href="'/user/'+opfriend.name"><img class="round" width="50" height="50" :src="opfriend.image"></a></div>
                 <div class="myname" v-if="dialogue.from_user_id=='{{__user__.id}}'"><a href="/user/{{__user__.name}}"><img class="uk-comment-avatar uk-border-circle" width="50" height="50" src="{{ __user__.image }}"></a></div>
                 <div :class="dialogue.from_user_id!='{{__user__.id}}'?'otherwords':'mywords'" v-html="dialogue.content"></div>
                 

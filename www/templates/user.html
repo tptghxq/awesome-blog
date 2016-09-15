@@ -14,52 +14,25 @@ var itemslist = new Vue({
         lastName:lastName
     }
 });
-var vm  = new Vue({
+var userinfobox  = new Vue({
       el:'#vm',
       data:{
-        message:'',
-        followings:[],
-        followers:[],
+        followstate:{{user.followstate}},
         page:''
       },
-      ready: function(){
-                this.followuser(0);
-        },
       methods:{
-        getfollowings: function(p){
-            that=this;
-            getJSON('/api/list/following',{name:'{{user.name}}',page:p},function(err,r){
-                if(err){showInfo(err)}
-                    else{
-                        that.followings=r.followings;
-                        that.page=r.page;
-                        alert(that.followings);
-                    }
-            })
-        },getfollowers: function(p){
-            that=this;
-            getJSON('/api/list/follower',{name:'{{user.name}}',page:p},function(err,r){
-                if(err){showInfo(err)}
-                    else{
-                        that.followers=r.followers;
-                        that.page=r.page;
-                         alert(that.followers);
-                    }
-            })
-        },
-        followuser: function(str){
+
+        followuser: function(){
             if ('{{__user__.name}}' && '{{ user.id }}' != '{{ __user__.id }}') {
                 var $focusButton =$('#focusButton');
                     $focusButton.addClass('disabled');
-                var $vm = $('#vm');
                 that=this;
                 postJSON('/api/follow',{
                     ownerId:'{{ user.id }}' ,
-                    ownerName:'{{ user.name }}',
-                    state:str
+                    ownerName:'{{ user.name }}'
                 },function(err,r){
                     if (!err) {
-                            that.message=r.message;
+                            that.followstate=r.followstate;
                             $focusButton.removeClass('disabled');
                            
                     }
@@ -71,49 +44,77 @@ var vm  = new Vue({
 var pagination=new Vue({
     el:".pagination2",
     data:{
-    pageCodes:getPageCodes('{{page.page_index}}','{{page.page_count}}')},methods:{gotoPage:function(pageCode){
-        if(pageCode=='{{page.page_index}}'){
-            return;
-        }
-        gotoPage(pageCode);
-    }
-}
-});
-Vue.component('focusone',{
-
-    data:function(){
-         return {message:0}
-        },
-    props:['userid','username'],
-    template:'<div v-on:click="focussomebody(1)" class="dobutton" v-text="message"></div>',
-    ready:function(){
-        this.focussomebody(0);
+    pageCodes:getPageCodes('{{page.page_index}}','{{page.page_count}}')
     },
     methods:{
-        focussomebody:function(op){
+        gotoPage:function(pageCode){
+            if(pageCode=='{{page.page_index}}'){
+                return;
+            }
+            gotoPage(pageCode);
+        }
+    }
+});
+
+Vue.component('focusone',{
+    // el:function(){
+    //    return '#'+this.userid;
+    // },
+    data:function(){
+         return {
+            followstate2:this.followstate
+         }
+        },
+        computed:{
+            showtext:function(){
+                if(this.followstate2==1){
+                    return '取消关注'
+                }
+                else{
+                    return '关注'
+                }
+            }
+            // dobu:function(){
+            //     if(this.followstate2==1){
+            //         return true
+            //     }
+            //     else{return false}
+            // }
+        },
+    props:['userid','username','followstate'],
+    // followstate2==0 ,followstate2==1 ,判断语句要像这样写完整
+    template:'<div class="focusbutts" :class="{dobutton:followstate2==0 ,undobutton:followstate2==1}"  v-on:click="focussomebody" v-text="showtext"></div>',
+    methods:{
+        focussomebody:function(event){
                 if ('{{__user__.name}}' && this.userid != '{{ __user__.id }}') {
-                    // $(event.target).addClass('disabled'); 
+                    $(event.target).addClass('disabled'); 
                     that=this;
                     postJSON('/api/follow',{
                         ownerId:that.userid ,
-                        ownerName:that.username,
-                        state:op
+                        ownerName:that.username
                     },function(err,r){    
-                        // $(event.target).removeClass('disabled');
+                    $(event.target).removeClass('disabled');
                     if(err){
                         showInfo(err);
                     }
                     else{
-                        that.message=r.message;    
+                        that.followstate2=r.followstate;    
                         }
                     });
                 }
         }
     }
 });
- new Vue({
-  el: '.userslist'
+var followlist = new Vue({
+  el: '.userslist',
+  data:{items:[]}
 }); 
+//  {% if followings %}
+// followlist.items = {{followings}}
+//  {% endif %}
+//   {% if followers %}
+// followlist.items = {{followers}}
+//  {% endif %}
 });
 </script>
 
@@ -138,7 +139,7 @@ Vue.component('focusone',{
 </div>
     <a href="/user/{{user.name}}"><img width="120" class="round" height="120" src="{{ user.image }}"></a>
     <h2>{{ user.name }}</h2>
-    <button v-on:click="followuser('change')" v-if="'{{ __user__.id }}' &&'{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" :class="message?'undobutton':'dobutton'" v-text="message?'取关':'关注'"></botton>   
+    <button v-on:click="followuser" v-if="'{{ __user__.id }}' &&'{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" :class="followstate?'undobutton':'dobutton'" v-text="followstate?'取关':'关注'"></botton>   
 </div>
 <div class="bloglist">
 
@@ -179,7 +180,7 @@ Vue.component('focusone',{
             </div>
         </div>
         </div>
-       <div is="focusone"  userid="{{follow.id}}" username="{{follow.name}}"></div>  
+       <div is="focusone" userid="{{follow.id}}" username="{{follow.name}}" followstate="{{follow.followstate}}"></div>  
        <!-- html有些标签有严格规定只能嵌入某些标签  -->      
        </li>
 {% endfor %}
@@ -197,18 +198,19 @@ Vue.component('focusone',{
             </div>
         </div>
         </div>       
-         <div is="focusone"  userid="{{follow.id}}" username="{{follow.name}}"></div>  
+         <div is="focusone"  userid="{{follow.id}}" username="{{follow.name}}" followstate="{{follow.followstate}}"></div>  
        <!-- html有些标签有严格规定只能嵌入某些标签  -->      
        </li>
 {% endfor %}
 </ul>
-    <div class="pagebox"><ul class="pagination2">
+
+
+</div>
+<div class="pagebox">
+        <ul class="pagination2">
             <li v-for="pageCode in pageCodes"><a :class="pageCode=={{page.page_index}}?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
         </ul>
-</div>
-
-</div>
-
+</div> 
 
 </div>
 {% endblock %}

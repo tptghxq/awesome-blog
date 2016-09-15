@@ -22,12 +22,19 @@
     <script src="/static/dist/js/wangEditor.min.js"></script>
     <script>
     $(function(){
-            Vue.config.debug = true;
-var userhead = new Vue({
-    el:"#usera",
+        Vue.config.debug = true;
+        var firstname = location.pathname.split('/')[1];
+var header = new Vue({
+    el:".main-header",
     data:{
         classObject:{
             'ahover1':'{{__user__.image}}'=='/static/img/user.png'
+        },
+        classObject2:{
+            'blueactive':firstname==''
+        },
+        classObject3:{
+            'blueactive':firstname=='manage'
         }
     }
 });
@@ -45,8 +52,8 @@ var userhead = new Vue({
 </h1>
     <nav id="secondary-primary-nav">
             <ul>
-                <li class="nav-button hoverline" data-url="blogs"><a href="/">日志</a></li>
-                 <li class="nav-button hoverline"><a href="/manage/blogs">管理</a></li>
+                <li class="nav-button hoverline" data-url="blogs"><a href="/" :class="classObject2">日志</a></li>
+                 <li class="nav-button hoverline"><a href="/manage/blogs" :class="classObject3">管理</a></li>
             </ul>
     </nav>
             <div  class="nav nav1 nav-element">
@@ -60,7 +67,9 @@ var userhead = new Vue({
                         <i class="uk-icon-user"></i> {{ __user__.name }}
                           {%endif%}
                           </a>
-                            <ul><li><a href="/manage/blogs/create">写博客</a></li>
+                            <ul>
+
+                            <li><a href="/manage/blogs/create">写博客</a></li>
                                 <li><a href="/setting">设置</a></li>
                                 <li><a href="/service/dialogue">对话</a></li>
                                 <li><a href="/signout">登出</a></li>
@@ -89,9 +98,9 @@ var userhead = new Vue({
             <div class="base-bottom">
                 <p>
                     <a target="_blank" href="http://weibo.com/fancao" class="circlebutton" ><i class="uk-icon-weibo"></i></a>
-                    <a target="_blank" href="https://github.com/michaelliao" class="circlebutton"><i class="uk-icon-github"></i></a>
+                    <a target="_blank" href="https://github.com/tptghxq" class="circlebutton"><i class="uk-icon-github"></i></a>
                 </p>
-                <p>Powered by <a class="bottomtext" href="http://awesome.liaoxuefeng.com">Awesome Python Webapp</a>. Copyright &copy; 2016. [<a class="bottomtext" href="/manage" target="_blank">Manage</a>]</p>
+                <p>Powered by <a class="bottomtext" href="http://awesome.liaoxuefeng.com">Liao Xuefeng</a>. Copyright &copy; 2016. [<a class="bottomtext" href="/manage" target="_blank">Manage</a>]</p>
                 
             </div>
 

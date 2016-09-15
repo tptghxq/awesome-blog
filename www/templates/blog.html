@@ -39,36 +39,34 @@ $(function () {
         'redo',
     ];
     editor.config.menuFixed = false;
+        editor.config.emotions={
+        'default':{
+            title:'默认',
+            data:'../../static/emotions/emotions.data'
+        }
+    };
 editor.create();
  {% endif %}
     var article = new Vue({
         el:'#article',data:{
-            reblog:''
+            like_num:'{{blog.like_num}}',
+            likestate:{{blog.likestate}}
         },
-        ready:function(){
-                 if ('{{__user__.id}}'=='{{blog.user_id}}') {
-                 $('#like').addClass('disabled');
-               }
-            this.addLikeBlog('{{blog.id}}',1);
-        },methods:{
-            addLikeBlog:function(blogid,op){
-                $like=$('.likebutton');
-            if ('{{__user__.id}}'=='{{blog.user_id}}') {op=1;}
-            
+        methods:{
+            addLikeBlog:function(blogid){
+            if (!'{{__user__.id}}'||('{{__user__.id}}'=='{{blog.user_id}}')) {
+                return 
+            }
+                $like=$('.likebutton');          
             $like.addClass('disabled');
             that=this;
-            postJSON('/api/likeblog',{blog_id:blogid,op:op},function(err,r){
-              if ('{{__user__.id}}'!='{{blog.user_id}}') {  $like.removeClass('disabled');}
+            postJSON('/api/likeblog',{blog_id:blogid},function(err,r){
+            $like.removeClass('disabled');
             if(err){
                 showInfo(err);
             }else{
-                that.reblog=r.reblog;
-                if(r.message==0){$like.css('color','#70B3DC');}
-                else{
-                    
-                    $like.css('color','#FF1E00');
-                }
-                
+                that.likestate=r.likestate;
+                that.like_num=r.like_num;              
             }
         });}
         }
@@ -95,10 +93,20 @@ editor.create();
 
 Vue.component('doagree',{
     data:function(){
-         return {agreenum:this.agreenum2,disagreenum:this.disagreenum2}
+         return {
+            agreestate:this.agreestate2,
+            agreenum:this.agreenum2,
+            disagreenum:this.disagreenum2,
+            // isA:this.agreestate==1,
+            // isB:!this.agreestate,
+            // classObject: {
+            // 'upactive':this.agreestate==1,
+            // 'triangleup':!this.agreestate
+            // }
+         }
         },
-    props:['commentid','agreenum2','disagreenum2'],
-    template:'<div class="agreebox"><div class="borderbutton agreebutton" v-on:click="opagree(2,$event)" v-text="agreenum"></div><p v-text="message"></p><div class="borderbutton agreebutton" v-on:click="opagree(3,$event)" v-text="disagreenum"></div></div>',
+    props:['agreestate2','commentid','agreenum2','disagreenum2'],
+    template:'<div class="agreebox"><div class="triangleup" :class="{upactive:agreestate==1}" v-on:click="opagree(1,$event)"></div><div v-text="agreenum"></div><div v-text="disagreenum"></div><div class="triangledown" :class="{downactive:agreestate==-1}" v-on:click="opagree(-1,$event)"></div></div>',
     methods:{
     opagree:function(op,event){
     $(event.target).addClass('disabled'); 
@@ -108,13 +116,14 @@ Vue.component('doagree',{
         if(err){showInfo(err);}
         else{
            that.agreenum=r.agreenum;
-           that.message=r.message;
+           that.agreestate=r.agreestate;
            that.disagreenum=r.disagreenum;
     }
     });
-}
+    }
     }
 });
+
 new Vue({
   el: '#allcomment'
 });
@@ -129,19 +138,20 @@ new Vue({
 
 <div class="uk-width-medium-3-5 oneblog">
         <article id="article">
-        
-            <h2>{{ blog.name }}</h2>
-            <span class="fragment author"><a href="/user/{{blog.user_name}} ">{{ blog.user_name }}</a></span><span class="fragment smarttime">{{ blog.created_at|datetime }}      </span>
+        <h2>{{ blog.name }}</h2>  
+          <div class="frags">   
+          <span class="fragment author"><a href="/user/{{blog.user_name}} ">{{ blog.user_name }}</a></span><span class="fragment smarttime">{{ blog.created_at|datetime }}      </span>
                 {% if blog.update_at %}
                     <span class="fragment smarttime">更新于{{ blog.update_at|datetime}}</span>
 
                 {% endif %}
-                <span class="fragment"><a class="likebutton" v-on:click="addLikeBlog('{{blog.id}}',2)" href="javascript:void(0)"><i class="uk-icon-heart"></i></a><span class="num gred" v-text="reblog.like_num"></span></span><span class="fragment"><i class="uk-icon-eye blue"></i><span class="num gred" v-text="reblog.read_num"></span></span>
+                <span class="fragment"><a class="likebutton" :class="likestate?'red':'blue'" v-on:click="addLikeBlog('{{blog.id}}',2)" href="javascript:void(0)"><i class="uk-icon-heart"></i></a><span class="num gred" v-text="like_num"></span></span><span class="fragment"><i class="uk-icon-eye blue"></i><span class="num gred">{{blog.read_num}}</span></span>
              {% if __user__.admin or __user__.id==blog.user_id %}   
              <a onclick="deleteItem({{blog}})" class="delete" href="javascript:void(0)">删除</a> 
              <a class="edit" href="/manage/blogs/edit?id={{blog.id}}">编辑</a>
              {% endif %}
-            <div class="blogcontent">{{ blog.html_content|safe }}</div>
+        </div>
+            <div class="blogcontent">{{ blog.content|safe }}</div>
             
         </article>
 
@@ -180,17 +190,17 @@ new Vue({
             <!-- 评论书签 -->
 
                 <article class="uk-comment">
- <doagree name="agreebox" agreenum2="{{comment.agree_num}}" disagreenum2="{{comment.disagree_num}}" commentid="{{comment.id}}"></doagree>
+ <doagree name="agreebox" agreestate2="{{comment.agreestate}}" agreenum2="{{comment.agree_num}}" disagreenum2="{{comment.disagree_num}}" commentid="{{comment.id}}"></doagree>
                 <a name="{{comment.id}}" class="disabled" href="javascript:void(0)"></a>
                     <header class="uk-comment-header comment-header">
                     <a href="/user/{{comment.user_name}}">
-                        <img class="uk-comment-avatar uk-border-circle" width="50" height="50" src="{{ comment.user_image }}"></a>
+                        <img class="round" style="width:55px;height:55px;margin-right:1em" src="{{ comment.user_image }}"></a>
                         <h4 class="uk-comment-title"><span>{{ comment.user_name }} {% if comment.user_id==blog.user_id %}<span class="authoricon">(作者)</span>{% endif %} </span><span class="smarttime">{{ comment.created_at|datetime }}</span></h4>{% if __user__.admin or comment.user_id==__user__.id %}<a class="delete" style="position:absolute;right:1em;bottom:0.5em;" onclick="deleteItem({{comment}})" href="javascript:void(0)">删除</a>{% endif %}
                 
                     </header>
                     
                     <div class="comment-body">
-                        {{ comment.html_content|safe }}
+                        {{ comment.content|safe }}
                     </div>
                     
                         
@@ -198,7 +208,7 @@ new Vue({
                 
             </li>
             {% else %}
-            <p>还没有人评论...</p>
+            <p>暂时还没有人评论</p>
             {% endfor %}
         </ul>
 

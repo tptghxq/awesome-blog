@@ -324,11 +324,17 @@ def getFocusBlogs(request,*,page='1'):
 
 
 @get('/user/{name}')
-def getuser(name,*,page='1'):
+def getuser(name,request,*,page='1'):
     user = yield from User.find(name,'name')
+    selfUser = request.__user__
     if user is None:
         raise APIValueError('404')
     user.passwd='******'
+    if selfUser:
+        num = yield from Follow.findNumber('count(id)','from_user_id=\''+selfUser.id+'\' and to_user_id=?',user.id) 
+        user.followstate=num
+    else:
+        user.followstate=0
     page_index = get_page_index(page)
     num = yield from Blog.findNumber('count(id)','user_name=?',name)
     page = Page(num,page_index)
@@ -345,10 +351,16 @@ def getuser(name,*,page='1'):
     }
 
 @get('/user/{name}/follower')
-def getFollower(name,*,page='1'):
+def getFollower(name,request,*,page='1'):
     user = yield from User.find(name,'name')
     if user is None:
-        raise APIValueError('不存在这个用户')
+        raise APIValueError('404')
+    selfUser=request.__user__
+    if selfUser:
+        num = yield from Follow.findNumber('count(id)','from_user_id=\''+selfUser.id+'\' and to_user_id=?',user.id) 
+        user.followstate=num
+    else:
+        user.followstate=0
     user.passwd='******'  
     follows = yield from Follow.findAll('to_user_id=?',[user.id],orderBy='created_at desc')
     if len(follows) == 0:
@@ -370,7 +382,11 @@ def getFollower(name,*,page='1'):
         followers = yield from User.findAll(where,from_user_ids,orderBy='created_at desc', limit=(page.offset, page.limit))
         for follower in followers:
             follower.password="******"
-            logging.info(follower.name)
+            if selfUser:
+                num = yield from Follow.findNumber('count(id)','from_user_id=\''+selfUser.id+'\' and to_user_id=?',follower.id) 
+                follower.followstate=num
+            else:
+                follower.followstate=0
     return {
         '__template__': 'user.html',
         'page': page,
@@ -379,11 +395,15 @@ def getFollower(name,*,page='1'):
     }
 
 @get('/user/{name}/following')
-def getFollowing(name,*,page='1'):
+def getFollowing(name,request,*,page='1'):
     user = yield from User.find(name,'name')
     if user is None:
-        raise APIValueError('不存在这个用户')
+        raise APIValueError('404')
     user.passwd='******'
+    selfUser = request.__user__
+    if selfUser:
+        num = yield from Follow.findNumber('count(id)','from_user_id=\''+selfUser.id+'\' and to_user_id=?',user.id) 
+        user.followstate=num
     follows = yield from Follow.findAll('from_user_id=?',[user.id],orderBy='created_at desc')
     if len(follows) == 0:
         page=Page(0,1)
@@ -403,7 +423,12 @@ def getFollowing(name,*,page='1'):
     else:
         followings = yield from User.findAll(where,to_user_ids,orderBy='created_at desc', limit=(page.offset, page.limit))
         for following in followings:
-            user.password="******"
+            following.password="******"
+            if selfUser:
+                num = yield from Follow.findNumber('count(id)','from_user_id=\''+selfUser.id+'\' and to_user_id=?',following.id) 
+                following.followstate=num
+            else:
+                following.followstate=0
     return {
         '__template__': 'user.html',
         'page': page,
@@ -414,18 +439,45 @@ def getFollowing(name,*,page='1'):
 
 
 @get('/blog/{id}')
-def get_blog(id):
+def get_blog(id,request,*,page='1'):
+    selfUser=request.__user__
     blog = yield from Blog.find(id)
     blog.read_num=blog.read_num+1
     yield from blog.update()
-    comments = yield from Comment.findAll('blog_id=?', [id], orderBy='agree_num desc')
-    for c in comments:
-        c.html_content = c.content
-    blog.html_content = blog.content
     if blog.image is None:
         blog.image=""
     if blog.summary is None:
         blog.summary=""
+    page_index = get_page_index(page)
+    num= yield from Comment.findNumber('count(id)','blog_id=?',id)
+    page = Page(num,page_index)
+    if selfUser:
+        appreciate=yield from Appreciate.find(selfUser.id,'user_id',blog.id,'blog_id')
+        if appreciate is None:
+            blog.likestate=0
+        else:
+            blog.likestate=1  
+    else:
+        blog.likestate=0 
+    comments = yield from Comment.findAll('blog_id=?', [id], orderBy='agree_num desc',limit=(page.offset, page.limit))
+    if len(comments) == 0:
+        return{
+        '__template__': 'blog.html',
+        'blog': blog,
+        'comments': []
+        }
+    for comment in comments:
+        if selfUser:
+            agree=yield from Agree.find(selfUser.id,'user_id',comment.id,'comment_id')
+            if agree is None:
+                comment.agreestate=0
+            else:
+                if agree.state:
+                    comment.agreestate=1
+                else:
+                    comment.agreestate=-1
+        else:
+            comment.agreestate=0          
     return {
         '__template__': 'blog.html',
         'blog': blog,
@@ -434,98 +486,82 @@ def get_blog(id):
 
 
 @post('/api/likeblog')
-def doLikeBlog(request,*,blog_id,op):
+def doLikeBlog(request,*,blog_id):
     blog=yield from Blog.find(blog_id)
     user = request.__user__
     if blog is None:
         raise APIResourceNotFoundError('没有这篇博客')
-    if op==1 and user is None:
-        return {'message':0,'reblog':blog}
-    if op==2 and user is None:
+    if user is None:
         raise APIPermissionError('请登陆后再喜欢哦')
     appreciate=yield from Appreciate.find(user.id,'user_id',blog_id,'blog_id')   
     if appreciate is None:
-        if op==1:
-            return{'message':0,'reblog':blog}
         appreciate2=Appreciate(user_id=user.id,blog_id=blog_id)
         yield from appreciate2.save()
         blog.like_num=blog.like_num+1
         yield from blog.update()
-        return {'message':1,'reblog':blog}
+        return {'likestate':1,'like_num':blog.like_num}
     else:
-        if op==1:
-            return{'message':1,'reblog':blog}
         yield from appreciate.remove()
         if(blog.like_num>0):
          blog.like_num=blog.like_num-1
          yield from blog.update()
-        return {'message':0,'reblog':blog}        
+         logging.info('喜欢数是谁谁谁水水水水水水水水谁谁谁：%s' % blog.like_num)
+        return {'likestate':0,'like_num':blog.like_num}        
 
-# state:当前状态 0代表踩，1代表赞；op:动作 1代表查看 2代表点赞按钮 3代表点踩按钮
+# state:当前状态 0代表踩，1代表赞；op:动作 1代表点赞按钮 -1代表点踩按钮
 @post('/api/agree')
 def doagree(request,*,comment_id,op):
     user = request.__user__
-    if user is None and op!=1:
+    if user is None:
         raise APIPermissionError('请登录')
     comment=yield from Comment.find(comment_id)
-    if user is None:
-        message=1
+    if comment is None:
+        raise APIResourceNotFoundError('没有这条评论')    
+    agree=yield from Agree.find(user.id,'user_id',comment_id,'comment_id')    
+    if comment.user_id == user.id:
+        raise APIPermissionError('不能赞或踩自己')
+    if agree is None:
+        # 点赞
+        if op==1:     
+            agree2=Agree(user_id=user.id,comment_id=comment_id,state=1)
+            yield from agree2.save()
+            comment.agree_num=comment.agree_num+1
+            yield from comment.update()
+            agreestate=1
+        if op==-1:
+            agree2=Agree(user_id=user.id,comment_id=comment_id,state=0)
+            yield from agree2.save()
+            comment.disagree_num=comment.disagree_num+1
+            yield from comment.update()
+            agreestate=-1
     else:
-        agree=yield from Agree.find(user.id,'user_id',comment_id,'comment_id')
-        if comment is None:
-            raise APIResourceNotFoundError('没有这条评论')
-        if comment.user_id == user.id and op!=1:
-            raise APIPermissionError('自己就不要给自己点赞了')
-        if agree is None:
-            # 查看是否点赞
-            if op==1: 
-                message=1         
-            # 点赞
-            if op==2:     
-                agree2=Agree(user_id=user.id,comment_id=comment_id,state=1)
-                yield from agree2.save()
+        if op==1:
+            if agree.state==1:
+                yield from agree.remove()
+                comment.agree_num=comment.agree_num-1
+                yield from comment.update()
+                agreestate=0
+            else:
+                agree.state=1
+                yield from agree.update()
                 comment.agree_num=comment.agree_num+1
+                comment.disagree_num=comment.disagree_num-1
                 yield from comment.update()
-                message=2
-            if op==3:
-                agree3=Agree(user_id=user.id,comment_id=comment_id,state=0)
-                yield from agree3.save()
+                agreestate=1
+        if op==-1:
+            if agree.state==0:
+                yield from agree.remove()
+                comment.disagree_num=comment.disagree_num-1
+                yield from comment.update()
+                agreestate=0
+            else:
+                agree.state=0
+                yield from agree.update()
                 comment.disagree_num=comment.disagree_num+1
+                comment.agree_num=comment.agree_num-1
                 yield from comment.update()
-                message=3
-        if agree:
-            if op==1:
-                if agree.state==1:
-                    message=2
-                else:
-                    message=3
-            if op==2:
-                if agree.state==1:
-                    yield from agree.remove()
-                    comment.agree_num=comment.agree_num-1
-                    yield from comment.update()
-                    message=1
-                else:
-                    agree.state=1
-                    yield from agree.update()
-                    comment.agree_num=comment.agree_num+1
-                    comment.disagree_num=comment.disagree_num-1
-                    yield from comment.update()
-                    message=2
-            if op==3:
-                if agree.state==0:
-                    yield from agree.remove()
-                    comment.disagree_num=comment.disagree_num-1
-                    yield from comment.update()
-                    message=1
-                else:
-                    agree.state=0
-                    yield from agree.update()
-                    comment.disagree_num=comment.disagree_num+1
-                    comment.agree_num=comment.agree_num-1
-                    yield from comment.update()
-                    message=3
-    return{'message':message,'agreenum':comment.agree_num,'disagreenum':comment.disagree_num}
+                agreestate=-1
+    return{'agreestate':agreestate,'agreenum':comment.agree_num,'disagreenum':comment.disagree_num}
 
 @get('/register')
 def register():
@@ -546,14 +582,12 @@ def change():
     }
 
 @post('/api/follow')
-def follow(request,*,ownerId,ownerName,state):
+def follow(request,*,ownerId,ownerName):
     user=request.__user__
     fromid=user.id
     if fromid is None:
         raise APIPermissionError("请登录后关注")
     num = yield from Follow.findNumber('count(id)','from_user_id=\''+fromid+'\' and to_user_id=?',ownerId)
-    if state == 0:
-        return dict(message=num)
     if num:
         follow=yield from Follow.find(fromid,'from_user_id',ownerId,'to_user_id')
         yield from follow.remove()
@@ -565,7 +599,7 @@ def follow(request,*,ownerId,ownerName,state):
             touser=yield from User.find(ownerId)
             touser.follower_num=touser.follower_num-1
             yield from touser.update()
-        return dict(message=0)
+        return dict(followstate=0)
     else:
         follow=Follow(from_user_id=fromid,to_user_id=ownerId,from_user_name=user.name,to_user_name=ownerName)
         yield from follow.save()
@@ -574,7 +608,7 @@ def follow(request,*,ownerId,ownerName,state):
         touser=yield from User.find(ownerId)
         touser.follower_num=touser.follower_num+1
         yield from touser.update()
-        return dict(message=1)
+        return dict(followstate=1)
 
 @post('/api/authenticate')
 def authenticate(*, email, passwd):
@@ -621,7 +655,7 @@ def manage_comments(items,*, page='1'):
     }
 
 @get('/manage/blogs/create')
-def manage_create_blog(request):
+def manage_create_blog():
     return {
         '__template__': 'manage_blog_edit.html',
         'id': '',

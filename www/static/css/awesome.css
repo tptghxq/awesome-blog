@@ -277,10 +277,11 @@ font-size: 15px;
   bottom: 0;
 }
 .base-bottom p {
-  margin:1em 0;
+  margin:2em 0;
 }
 a.bottomtext{
   color: #07AFE2;
+  margin:0 0.3em;
 }
 a.bottomtext:hover{
   color: #07FFFF;
@@ -311,6 +312,15 @@ padding-top: 150px;
 
 }
 .hoverline:hover:after {
+    background-color: #00A5E2;
+   height: 4px;
+   width: 100%;
+   bottom: 0;
+   content: "";
+   left: 0;
+   position: absolute;
+}
+.blueactive:after {
     background-color: #00A5E2;
    height: 4px;
    width: 100%;
@@ -572,7 +582,7 @@ ul{
   border-bottom: 3px solid #2b2b2b;
   position: relative;
   font-size: 17px;
-  overflow: hidden;
+  overflow: auto;
   padding-top: 50px;
 }
 
@@ -780,7 +790,7 @@ background: #f1f1f1;
   padding: 5px 5px;
   border: 2px solid #a43424; 
   border-radius:50px;
-  width: 50px;
+  width: 100px;
 }
 .dobutton:hover{
   color: #fff;
@@ -797,7 +807,7 @@ background: #f1f1f1;
   padding: 5px 5px;
   border: 2px solid rgba(232,16,16,0.8); 
   border-radius:50px;
-  width: 50px;
+  width: 100px;
 }
 .undobutton:hover{
   color: rgba(232,16,16,0.8);
@@ -878,12 +888,9 @@ background-color: none;
   position: absolute;
   bottom: 0;
   width: 100%;
-  left: 0;
- 
+ right: -170px;
 }
 .pagination2{
-  
-  bottom:-100px;
   position: relative;
   margin-top: 100px;
   display: flex;
@@ -942,7 +949,7 @@ position: relative;
   margin-bottom:20px; 
 }
 #follownumbox a:hover{
-  color: #4FC08D
+  color: #84BCE1
 }
 .rightline:after {
    background-color: #00A5E2;
@@ -1123,7 +1130,7 @@ border-radius: 0.3rem;
 .delete{
   font-size: 11px;
   font-family: "Microsoft YaHei";
-  color: #A01216;
+  color: #C81416;
 }
 .delete:hover{
   color: #E40B0B;
@@ -1177,7 +1184,7 @@ word-break: break-all;     /*使英文也换行*/
   font-family: 'Microsoft YaHei','STXihei';
 }
 .blue{
-  color: #1AABF9;
+  color: #B2D4F0;
 }
 .red{
   color: #C81416;
@@ -1270,7 +1277,7 @@ height: 0px;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  color: black;
+  color: #efefef;
 }
 
 
@@ -1295,6 +1302,71 @@ margin: 0;
   align-items: center;
   border-bottom: 1px solid #ddd;
 }
+.focusbutts{
+  flex:0 0 10%;
+}
 .specbutton{
   flex: 0 0 20%;
+}
+.triangleup {   
+
+width:0;
+
+height:0;   
+
+border-left:30px solid transparent;   
+
+border-right:30px solid transparent;   
+
+border-bottom:30px solid #fff;
+cursor: pointer;
+}
+.smalltriangleup {
+width:0;
+height:0;   
+border-left:5px solid transparent;   
+border-right:5px solid transparent;   
+border-bottom:5px solid #fff;
+cursor: pointer;
+flex: 0 1 5%;
+z-index: 1000;
+} 
+.triangledown {   
+
+width:0;   
+
+height:0;   
+
+border-left:30px solid transparent;   
+
+border-right:30px solid transparent;   
+
+border-top:30px solid #fff;
+cursor: pointer;
+} 
+.downactive {
+width:0;   
+height:0;   
+border-left:30px solid transparent;   
+border-right:30px solid transparent;   
+cursor: pointer;
+border-top:30px solid #84BCE1;
+}
+
+.upactive {   
+
+width:0;
+
+height:0;   
+
+border-left:30px solid transparent;   
+
+border-right:30px solid transparent;   
+
+border-bottom:30px solid #84BCE1;
+cursor: pointer;
+} 
+
+.frags{
+  margin-bottom: 1em;
 }
