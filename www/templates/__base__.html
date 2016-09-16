@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     {% block meta %}<!-- block meta  -->{% endblock %}
     <title>{% block title %} ? {% endblock %} - 波罗克</title>
+    <link rel="stylesheet" href="/static/css/font-awesome.min.css">
     <link rel="stylesheet" href="/static/css/uikit.min.css">
     <link rel="stylesheet" href="/static/css/uikit.gradient.min.css">
     <link rel="stylesheet" href="/static/css/awesome.css" />
@@ -45,14 +46,14 @@ var header = new Vue({
    <!--  <script src="/static/js/getnewsnum.js"></script> -->
     {% block beforehead %}<!-- before head  -->{% endblock %}
 </head>
-<body style="background:#252527;">
+<body>
 <header class="main-header">
     <h1 class="logo header-chunk">
     blog
 </h1>
     <nav id="secondary-primary-nav">
             <ul>
-                <li class="nav-button hoverline" data-url="blogs"><a href="/" :class="classObject2">日志</a></li>
+                <li class="nav-button hoverline" data-url="blogs"><a href="/" :class="classObject2">文章</a></li>
                  <li class="nav-button hoverline"><a href="/manage/blogs" :class="classObject3">管理</a></li>
             </ul>
     </nav>
@@ -64,15 +65,15 @@ var header = new Vue({
                         {% if __user__.image !='/static/img/user.png'%}
                         <img src="{{__user__.image}}" class="round" style="height:60px;width:auto;left:0,z-index:5">
                         {%else%}
-                        <i class="uk-icon-user"></i> {{ __user__.name }}
+                        <i class="fa fa-user"></i> {{ __user__.name }}
                           {%endif%}
                           </a>
                             <ul>
 
-                            <li><a href="/manage/blogs/create">写博客</a></li>
-                                <li><a href="/setting">设置</a></li>
-                                <li><a href="/service/dialogue">对话</a></li>
-                                <li><a href="/signout">登出</a></li>
+                            <li><a href="/manage/blogs/create"><i class="fa fa-pencil"></i>写文</a></li>
+                                <li><a href="/setting"><i class="fa fa-gears"></i>设置</a></li>
+                                <li><a href="/service/dialogue"><i class="fa fa-volume-control-phone"></i>消息</a></li>
+                                <li><a href="/signout"><i class="fa fa-sign-out"></i>登出</a></li>
                             </ul>
                     </li>
                 {% else %}
@@ -97,8 +98,8 @@ var header = new Vue({
 
             <div class="base-bottom">
                 <p>
-                    <a target="_blank" href="http://weibo.com/fancao" class="circlebutton" ><i class="uk-icon-weibo"></i></a>
-                    <a target="_blank" href="https://github.com/tptghxq" class="circlebutton"><i class="uk-icon-github"></i></a>
+                    <a target="_blank" href="http://weibo.com/fancao" class="circlebutton" ><i class="fa fa-weibo"></i></a>
+                    <a target="_blank" href="https://github.com/tptghxq" class="circlebutton"><i class="fa fa-github"></i></a>
                 </p>
                 <p>Powered by <a class="bottomtext" href="http://awesome.liaoxuefeng.com">Liao Xuefeng</a>. Copyright &copy; 2016. [<a class="bottomtext" href="/manage" target="_blank">Manage</a>]</p>
                 

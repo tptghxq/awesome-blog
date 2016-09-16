@@ -45,7 +45,6 @@ class Blog(Model):
 
 class Comment(Model):
     __table__ = 'comments'
-
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
     blog_id = StringField(ddl='varchar(50)')
     user_id = StringField(ddl='varchar(50)')
@@ -90,3 +89,17 @@ class Conversation(Model):
     content = TextField()
     created_at = FloatField(default=time.time)
     news = BooleanField()
+
+class Tag(Model):
+    __table__='tags'
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    user_id = StringField(ddl='varchar(50)')
+    name = StringField(ddl='varchar(60)')
+    num = IntField(default=1)
+
+class Tag_relation(Model):
+    __table__='tag_relations'
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    user_id = StringField(ddl='varchar(50)')
+    tag_name = StringField(ddl='varchar(60)')
+    blog_id = StringField(ddl='varchar(50)')

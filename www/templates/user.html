@@ -115,6 +115,30 @@ var followlist = new Vue({
 //   {% if followers %}
 // followlist.items = {{followers}}
 //  {% endif %}
+
+var tags =new Vue({
+    el:'.ablog',
+    data:{tags:[],tagnum:0},
+    ready:function(){
+        {% for tag in tags %}
+        this.tags.push({name:'{{tag.name}}',num:'{{tag.num}}'});
+        {%endfor%}
+        this.tagnum=this.tags.length;
+        }
+    ,
+    methods:{
+        deletetag:function(tag){
+            that=this;
+            getJSON('/api/{{user.name}}/tag/'+tag.name+'/delete',function(err,r){
+                if(err){showInfo(err)}
+                    else if(r.message==1){
+                        that.tags.$remove(tag);
+                        that.tagnum--;
+                    }
+            });
+        }
+    }
+});
 });
 </script>
 
@@ -124,18 +148,18 @@ var followlist = new Vue({
 <div class="ablog">
 <div class="userbox" id="vm">
 <div id="follownumbox">
-           <div>
+ <div>
            <a href="/user/{{user.name}}/following" class="rightline">
            <div class="num">{{user.following_num}}</div>
            <span>关注</span>
            </a>
-           </div>
-           <div>
+ </div>
+<div>
            <a href="/user/{{user.name}}/follower">
            <div class="num">{{user.follower_num}}</div>
            <span>粉丝</span>
            </a>
-           </div>
+</div>
 </div>
     <a href="/user/{{user.name}}"><img width="120" class="round" height="120" src="{{ user.image }}"></a>
     <h2>{{ user.name }}</h2>
@@ -203,14 +227,32 @@ var followlist = new Vue({
        </li>
 {% endfor %}
 </ul>
-
-
-</div>
 <div class="pagebox">
         <ul class="pagination2">
             <li v-for="pageCode in pageCodes"><a :class="pageCode=={{page.page_index}}?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
         </ul>
 </div> 
+</div>
+<!-- {% if tags %}
+<ul class="tagslist">
+{%for tag in tags%}
+    <li>
+    <span><i class="fa fa-tag"></i>
+<a href="/user/{{user.name}}/tag/{{tag.name}}"><span class="tag">{{tag.name}}</span></a><span>({{tag.num}})</span></span>
 
+{% if user.id == __user__.id%}
+<a href=""><i onclick="deletetag" class="fa fa-times"></i></a>
+{% endif %}
+</li>
+{% endfor %}  
+</ul>
+  {%endif%} -->
+<ul v-if="tagnum" class="tagslist">
+<li v-for="tag in tags">
+<span><i class="fa fa-tag"></i>
+<a :href="'/user/{{user.name}}/tag/'+tag.name"><span class="tag" v-text="tag.name"></span></a><span v-text="'('+tag.num+')'"></span></span>
+<i v-if="'{{user.id}}'=='{{__user__.id}}'" v-on:click="deletetag(tag)" class="fa fa-times"></i>
+</li>
+</ul>
 </div>
 {% endblock %}

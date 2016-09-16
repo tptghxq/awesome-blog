@@ -121,7 +121,7 @@ $(function(){
             <li><a :class="state==0?'active':''" href="javascript:void(0)" id="hot" v-on:click="getAllBlogs(1,'read_num desc',$event)">热门</a></li>
             <li><a :class="state==1?'active':''" href="javascript:void(0)" id="follow" v-on:click="getFocusBlogs(1)">关注</a></li>
             <li><a :class="state==2?'active':''" href="javascript:void(0)" id="like" v-on:click="getLikeBlogs(1)">喜欢</a></li>
-            <li><a :class="state==3?'active':''" href="javascript:void(0)" id="hot" v-on:click="getAllBlogs(1,'created_at desc',$event)">最新</a></li>
+            <li><a :class="state==3?'active':''" href="javascript:void(0)" id="newblogs" v-on:click="getAllBlogs(1,'created_at desc',$event)">最新</a></li>
         </ul>
      </div>
        <div class="articles">
@@ -130,7 +130,7 @@ $(function(){
             <h2><a :href="'/blog/'+blog.id" v-text="blog.name"></a></h2>
             
            <div v-if="blog.summary" class="summary" v-html="blog.summary"></div>
-           <p class="bloginfo"><a class="author fragment" :href="'/user/'+blog.user_name" v-text="blog.user_name"></a><span class="fragment"><i class="uk-icon-heart gred"></i><span class="num" v-text="blog.like_num"></span></span><span class="fragment"><i class="uk-icon-eye gred"></i><span class="num" v-text="blog.read_num"></span></span>
+           <p class="bloginfo"><a class="author fragment" :href="'/user/'+blog.user_name" v-text="blog.user_name"></a><span class="fragment"><i class="fa fa-heart gred"></i><span class="num" v-text="blog.like_num"></span></span><span class="fragment"><i class="fa fa-eye gred"></i><span class="num" v-text="blog.read_num"></span></span>
            <span class="fragment"><i class="uk-icon-comments gred"></i><span class="num" v-text="blog.review_num"></span></span><span class="time fragment" v-text="blog.created_at.toDateTime()"></span></p> 
         </div>
         <img class="blogimg" v-if="blog.image" :src="blog.image" style="height:100px;width:100px">

@@ -14,7 +14,7 @@ from aiohttp import web
 from coroweb import get, post
 from apis import Page, APIValueError,APIPermissionError,APIResourceNotFoundError,APIError
 
-from models import User, Comment, Blog,Agree, Follow,Appreciate,Conversation,next_id
+from models import User, Comment, Blog,Agree, Follow,Appreciate,Conversation,next_id,Tag_relation,Tag
 from config import configs
 
 
@@ -320,8 +320,58 @@ def getFocusBlogs(request,*,page='1'):
     'blogs':blogs,
     'page':page
     }
-        
 
+@get('/api/{name}/tag/{tagname}/delete')
+def deletetag(name,tagname,request):
+    user = yield from User.find(name,'name')
+    if user is None:
+        raise APIValueError('404')
+    selfUser = request.__user__
+    if selfUser is None or selfUser.id !=user.id:
+        raise APIPermissionError('你没有权限删除该标签')
+    tag=yield from Tag.find(tagname,'name')
+    if tag is None:
+        APIResourceNotFoundError('该标签不存在')
+    tag_relations =yield from Tag_relation.findAll('user_id=? and tag_name=?',[selfUser.id,tagname])
+    if len(tag_relations):
+        for tag_relation in tag_relations:
+            yield from tag_relation.remove()
+    yield from tag.remove()
+    return {'message':1}
+
+
+@get('/user/{name}/tag/{tagname}')
+def gettagblogs(name,tagname,request,*,page='1'):
+    user = yield from User.find(name,'name')
+    selfUser = request.__user__
+    if user is None:
+        raise APIValueError('404')
+    user.passwd='******'
+    if selfUser:
+        num = yield from Follow.findNumber('count(id)','from_user_id=\''+selfUser.id+'\' and to_user_id=?',user.id) 
+        user.followstate=num
+    else:
+        user.followstate=0
+    page_index = get_page_index(page)
+    tag_relations = yield from Tag_relation.findAll('user_id=? and tag_name=?',[user.id,tagname])
+    if len(tag_relations) == 0:
+        blogs=[]
+    blog_ids = [tag_relation.blog_id for tag_relation in tag_relations]
+    where='id in ('+','.join(len(blog_ids)*'?')+')'
+    num = yield from Blog.findNumber('count(id)',where,blog_ids)
+    page = Page(num,page_index)
+    if num == 0:
+        blogs = []
+    else:
+        blogs = yield from Blog.findAll(where,blog_ids,orderBy='created_at desc', limit=(page.offset, page.limit))
+    tags = yield from Tag.findAll('user_id=?',user.id)
+    return {
+        '__template__': 'user.html',
+        'page': page,
+        'blogs': blogs,
+        'user':user,
+        'tags':tags
+    }
 
 @get('/user/{name}')
 def getuser(name,request,*,page='1'):
@@ -342,12 +392,13 @@ def getuser(name,request,*,page='1'):
         blogs = []
     else:
         blogs = yield from Blog.findAll('user_name=?',[name],orderBy='created_at desc', limit=(page.offset, page.limit))
-    
+    tags = yield from Tag.findAll('user_id=?',user.id)
     return {
         '__template__': 'user.html',
         'page': page,
         'blogs': blogs,
-        'user':user
+        'user':user,
+        'tags':tags
     }
 
 @get('/user/{name}/follower')
@@ -459,29 +510,32 @@ def get_blog(id,request,*,page='1'):
             blog.likestate=1  
     else:
         blog.likestate=0 
+    tag_relations = yield from Tag_relation.findAll('blog_id=?',blog.id)
+    if len(tag_relations)==0:
+        tagnames=[]
+    else:
+        tagnames = [tag_relation.tag_name for tag_relation in tag_relations]
     comments = yield from Comment.findAll('blog_id=?', [id], orderBy='agree_num desc',limit=(page.offset, page.limit))
     if len(comments) == 0:
-        return{
-        '__template__': 'blog.html',
-        'blog': blog,
-        'comments': []
-        }
-    for comment in comments:
-        if selfUser:
-            agree=yield from Agree.find(selfUser.id,'user_id',comment.id,'comment_id')
-            if agree is None:
-                comment.agreestate=0
-            else:
-                if agree.state:
-                    comment.agreestate=1
+       comments=[]
+    else:
+        for comment in comments:
+            if selfUser:
+                agree=yield from Agree.find(selfUser.id,'user_id',comment.id,'comment_id')
+                if agree is None:
+                    comment.agreestate=0
                 else:
-                    comment.agreestate=-1
-        else:
-            comment.agreestate=0          
+                    if agree.state:
+                        comment.agreestate=1
+                    else:
+                        comment.agreestate=-1
+            else:
+                comment.agreestate=0
     return {
         '__template__': 'blog.html',
         'blog': blog,
-        'comments': comments
+        'comments': comments,
+        'tagnames':tagnames
     }
 
 
@@ -764,46 +818,86 @@ def api_register_user(*, email, name, passwd):
 @get('/api/blogs/{id}')
 def api_get_blog(*, id):
     blog = yield from Blog.find(id)
+    if blog is None:
+        raise APIValueError('博文不存在')
+    tag_relations = yield from Tag_relation.findAll('blog_id=?',blog.id)
+    tagnames = [tag_relation.tag_name for tag_relation in tag_relations]
+    blog['tagnames']=tagnames
     return blog
 
 @post('/api/blogs')
-def api_create_blog(request, *, name,summary,content,image):
+def api_create_blog(request, *, name,summary,content,image,tagnames):
+    user=request.__user__
     if request.__user__ is None:
         raise APIPermissionError('请登录后再写博文')
     if not name or not name.strip():
         raise APIValueError('name', 'name cannot be empty.')
     if not content or not content.strip():
         raise APIValueError('content', 'content cannot be empty.')
-
     argsList={'user_id':request.__user__.id,'user_name':request.__user__.name,'user_image':request.__user__.image,'name':name.strip(),'content':content.strip()}
     if summary:
         argsList['summary']=summary
     if image:
         argsList['image']=image
     blog = Blog(**argsList)
+
     yield from blog.save()
+    for tagname in tagnames:
+        tag=yield from Tag.find(tagname,'name',user.id,'user_id')
+        if tag is None:
+            logging.info('111111111111111111111111111111111111111111111111')
+            tag=Tag(name=tagname,user_id=user.id)
+            yield from tag.save()
+        else:
+            logging.info('222222222222222222222222222222222222222222222222')
+            tag.num=tag.num+1
+            yield from tag.update()
+        tag_relation=Tag_relation(tag_name=tagname,blog_id=blog.id,user_id=user.id)
+        yield from tag_relation.save()
     return blog
 
 @post('/api/blogs/{id}')
-def api_update_blog(id, request, *, name, summary, content,image):
+def api_update_blog(id, request, *, name, summary, content,image,tagnames):
     blog = yield from Blog.find(id)
-    if request.__user__.admin or request.__user__.id == blog.user_id :
-        if not name or not name.strip():
-            raise APIValueError('name', 'name cannot be empty.')
-        if not content or not content.strip():
-            raise APIValueError('content', 'content cannot be empty.')
-        blog.name = name.strip()
-        blog.summary = summary.strip()
-        blog.content = content.strip()
-        blog.update_at = time.time()
-        if image:
-            blog.image=image
-        if summary:
-            blog.summary=summary  
-        yield from blog.update()
-        return blog
-    else:
+    selfUser=request.__user__
+    if not request.__user__.admin and selfUser.id != blog.user_id :
         raise APIPermissionError('you have not permission')
+    if not name or not name.strip():
+        raise APIValueError('name', 'name cannot be empty.')
+    if not content or not content.strip():
+        raise APIValueError('content', 'content cannot be empty.')
+    blog.name = name.strip()
+    blog.summary = summary.strip()
+    blog.content = content.strip()
+    blog.update_at = time.time()
+    if image:
+        blog.image=image
+    if summary:
+        blog.summary=summary  
+    yield from blog.update()
+    oldTag_relations = yield from Tag_relation.findAll('blog_id=?',blog.id)
+    for oldTag_relation in oldTag_relations:
+       yield from oldTag_relation.remove()
+       tag=yield from Tag.find(oldTag_relation.tag_name,'name')
+       if tag:
+            tag.num=tag.num-1
+            if tag.num==0:
+                yield from tag.remove()
+            else:
+                yield from tag.update()
+    for tagname in tagnames:
+        tag=yield from Tag.find(tagname,'name',selfUser.id,'user_id')
+        if tag is None:
+            tag=Tag(name=tagname,user_id=selfUser.id)
+            yield from tag.save()
+        else:
+            tag.num=tag.num+1
+            yield from tag.update()
+        tag_relation=Tag_relation(tag_name=tagname,blog_id=blog.id,user_id=selfUser.id)
+        yield from tag_relation.save()
+    return blog
+
+        
 
 @post('/api/blogs/{id}/delete')
 def api_delete_blog(request, *, id):
@@ -817,4 +911,15 @@ def api_delete_blog(request, *, id):
     if len(comments) != 0:
         for comment in comments:
             yield from comment.remove()
+    tag_relations = yield from Tag_relation.findAll('blog_id=?',id)
+    if len(tag_relations):
+        for tag_relation in tag_relations:
+            yield from tag_relation.remove()
+            tag = yield from Tag.find(tag_relation.tag_name,'name',blog.user_id,'user_id')
+            if tag:
+                tag.num = tag.num - 1
+                if tag.num ==0:
+                    yield from tag.remove()
+                else:
+                    yield from tag.update()
     return dict(id=id)

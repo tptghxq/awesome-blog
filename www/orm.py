@@ -134,8 +134,8 @@ class ModelMetaclass(type):
                     primaryKey = k
                 else:
                     fields.append(k)
-        if not primaryKey:
-            raise StandardError('Primary key not found.')
+        # if not primaryKey:
+        #     raise StandardError('Primary key not found.')
         for k in mappings.keys():
             attrs.pop(k)
         escaped_fields = list(map(lambda f: '`%s`' % f, fields))

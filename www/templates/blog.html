@@ -97,16 +97,10 @@ Vue.component('doagree',{
             agreestate:this.agreestate2,
             agreenum:this.agreenum2,
             disagreenum:this.disagreenum2,
-            // isA:this.agreestate==1,
-            // isB:!this.agreestate,
-            // classObject: {
-            // 'upactive':this.agreestate==1,
-            // 'triangleup':!this.agreestate
-            // }
          }
         },
     props:['agreestate2','commentid','agreenum2','disagreenum2'],
-    template:'<div class="agreebox"><div class="triangleup" :class="{upactive:agreestate==1}" v-on:click="opagree(1,$event)"></div><div v-text="agreenum"></div><div v-text="disagreenum"></div><div class="triangledown" :class="{downactive:agreestate==-1}" v-on:click="opagree(-1,$event)"></div></div>',
+    template:'<div class="agreebox"><i class="fa fa-sort-up triangleup" :class="{upactive:agreestate==1}" v-on:click="opagree(1,$event)"></i><div v-text="agreenum"></div><div v-text="disagreenum"></div><i class="fa fa-sort-desc triangledown" :class="{downactive:agreestate==-1}" v-on:click="opagree(-1,$event)"></i></div>',
     methods:{
     opagree:function(op,event){
     $(event.target).addClass('disabled'); 
@@ -138,21 +132,48 @@ new Vue({
 
 <div class="uk-width-medium-3-5 oneblog">
         <article id="article">
-        <h2>{{ blog.name }}</h2>  
+        <h2><span class="fragment">{{ blog.name }}</span>
+        {% if __user__.admin or __user__.id==blog.user_id %}   
+             <a class="fragment" onclick="deleteItem({{blog}})" href="javascript:void(0)"><i class="fa fa-trash"></i></a> 
+             <a class="fragment" href="/manage/blogs/edit?id={{blog.id}}"><i class="fa fa-edit"></i></a>
+             {% endif %}</h2>  
           <div class="frags">   
-          <span class="fragment author"><a href="/user/{{blog.user_name}} ">{{ blog.user_name }}</a></span><span class="fragment smarttime">{{ blog.created_at|datetime }}      </span>
+          <span class="fragment author"><a href="/user/{{blog.user_name}} ">{{ blog.user_name }}</a></span><span class="fragment smarttime">{{ blog.created_at|datetime }}</span>
                 {% if blog.update_at %}
                     <span class="fragment smarttime">更新于{{ blog.update_at|datetime}}</span>
 
                 {% endif %}
-                <span class="fragment"><a class="likebutton" :class="likestate?'red':'blue'" v-on:click="addLikeBlog('{{blog.id}}',2)" href="javascript:void(0)"><i class="uk-icon-heart"></i></a><span class="num gred" v-text="like_num"></span></span><span class="fragment"><i class="uk-icon-eye blue"></i><span class="num gred">{{blog.read_num}}</span></span>
-             {% if __user__.admin or __user__.id==blog.user_id %}   
-             <a onclick="deleteItem({{blog}})" class="delete" href="javascript:void(0)">删除</a> 
-             <a class="edit" href="/manage/blogs/edit?id={{blog.id}}">编辑</a>
-             {% endif %}
+                <span class="fragment"><i class="fa fa-heart" :class="likestate?'redlikebutton':'likebutton'" v-on:click="addLikeBlog('{{blog.id}}',2)"></i><span class="num" v-text="like_num"></span></span><span class="fragment"><i class="fa fa-eye"></i><span class="num">{{blog.read_num}}</span></span>
+             
         </div>
-            <div class="blogcontent">{{ blog.content|safe }}</div>
-            
+            <div class="blogcontent">{{ blog.content|safe }}
+
+<!-- JiaThis Button BEGIN -->
+<div class="footer">  
+<div class="tagboxs">
+{% for tagname in tagnames %}
+<span class="tagbox">
+<i class="fa fa-tag"></i>
+<a href="/user/{{blog.user_name}}/tag/{{tag}}"><span class="tag">{{tagname}}</span></a>
+</span>
+{% endfor %}
+
+</div>
+    <div class="jiathis">
+    <a class="jiathis_txt"><i class="fa fa-share"></i></a>
+    <ul>
+    <li><a class="jiathis_button_tsina"><i class="fa fa-weibo"></i></a></li>
+    <li><a class="jiathis_button_tqq"><i class="fa fa-weixin"></i></a></li>
+    <li><a class="jiathis_button_renren"><i class="fa fa-renren"></i></a></li>
+    <li><a class="jiathis_button_cqq"><i class="fa fa-qq"></i></a></li>
+    </ul> 
+</div>
+<!-- JiaThis Button END -->
+</div>
+
+
+</div>
+
         </article>
 
         <hr class="uk-article-divider">
@@ -164,7 +185,7 @@ new Vue({
 
         <article class="uk-comment">
             <div class="uk-comment-header">
-                <div class="commentuser"><img class="uk-comment-avatar uk-border-circle" width="50" height="50" src="{{ __user__.image }}">
+                <div class="commentuser"><img class="round" src="{{ __user__.image }}">
                 <h3 class="uk-comment-title">{{ __user__.name }}</h3> </div>
                            <div class="uk-comment-body">
                 <form id="form-comment" class="uk-form">
@@ -173,14 +194,14 @@ new Vue({
                         <textarea id="commentArea" rows="6" placeholder="说点什么吧" style="width:100%;resize:none;border-radius:0;"></textarea>
                     </div>
                     <div class="uk-form-row">
-                        <button type="submit" class="recbutton">发表评论</button>
+                        <button type="submit" class="recbutton"><i class="fa fa-send"></i></button>
                     </div>
                 </form>
             </div>
             </div>
 
         </article>
-      <div class="comentnav"><h3>最新评论</h3></div>  
+      <div class="comentnav"><h3><i class="fa fa-comments"></i>最新评论</h3></div>  
 
   
     {% endif %}
@@ -195,7 +216,7 @@ new Vue({
                     <header class="uk-comment-header comment-header">
                     <a href="/user/{{comment.user_name}}">
                         <img class="round" style="width:55px;height:55px;margin-right:1em" src="{{ comment.user_image }}"></a>
-                        <h4 class="uk-comment-title"><span>{{ comment.user_name }} {% if comment.user_id==blog.user_id %}<span class="authoricon">(作者)</span>{% endif %} </span><span class="smarttime">{{ comment.created_at|datetime }}</span></h4>{% if __user__.admin or comment.user_id==__user__.id %}<a class="delete" style="position:absolute;right:1em;bottom:0.5em;" onclick="deleteItem({{comment}})" href="javascript:void(0)">删除</a>{% endif %}
+                        <h4 class="uk-comment-title"><span>{{ comment.user_name }} {% if comment.user_id==blog.user_id %}<span class="authoricon">(作者)</span>{% endif %} </span><span class="smarttime">{{ comment.created_at|datetime }}</span></h4>{% if __user__.admin or comment.user_id==__user__.id %}<a class="delete" style="position:absolute;right:1em;bottom:0.5em;" onclick="deleteItem({{comment}})" href="javascript:void(0)"><i class="fa fa-trash"></i></a>{% endif %}
                 
                     </header>
                     
@@ -213,5 +234,5 @@ new Vue({
         </ul>
 
 </div>
-
+<script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
 {% endblock %}

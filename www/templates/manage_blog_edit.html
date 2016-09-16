@@ -10,17 +10,18 @@ var
     action = '{{ action }}';
 
 $(function () {
-
-
+$('#edit1').hide(); 
 function initVM(blog) {
     var vm = new Vue({
         el: '#vm',
-        data: {name:blog.name,summary:blog.summary,content:blog.content,image:blog.image,editor1:'',editor2:''},
+        data: {name:blog.name,summary:blog.summary,content:blog.content,image:blog.image,editor1:'',editor2:'',drop:0,tagname:'',tagnum:blog.tagnames.length,tagnames:blog.tagnames},
         ready:function(){
             var editor1 = new wangEditor('edit1');
             editor1.config.menuFixed = false;
+          
             editor1.config.menus = [
         'source',
+        'insertcode',
         '|',
         'bold',
         'underline',
@@ -40,15 +41,18 @@ function initVM(blog) {
         'alignright',
         '|',
         'link',
-        'unlink',
-        '|',
-        'img',
-        'insertcode'
-
+        'unlink'
     ];
     editor1.create();
+//      editor1.$txt.one("click",function(){
+//             editor1.$txt.text('');
+// });
+    editor1.destroy();
+    editor1.$txt.hide();
+    $('#edit1').hide();
     this.editor1=editor1;
     var editor2 = new wangEditor('edit2');
+
     editor2.config.menuFixed = false;
     editor2.config.uploadImgUrl = '/api/upload';
     editor2.config.uploadImgFileName='blogPhoto';
@@ -96,10 +100,47 @@ function initVM(blog) {
         }
     };
     editor2.create();
+    //     editor2.$txt.one("click",function(){
+    //         editor2.$txt.text('');
+    // });
     this.editor2=editor2;
 
         },
         methods: {
+            deletetag:function(tagname){
+                this.tagnum--;
+                this.tagnames.$remove(tagname);
+            },
+            addtag:function(){
+                if(this.tagname.length<2){
+                    return showInfo("最少要输入2个字符",1);
+                }
+                if(this.tagnum>=5){
+                    return showInfo("最多添加五个标签",1);
+                }
+                this.tagnum++;
+                this.tagnames.push(this.tagname);
+                if(this.tagnames.length>5){
+                    this.tagnames=this.tagnames.slice(0,5);
+
+                }
+                this.tagname='';
+            },
+            droptoggle:function(){
+                this.drop=!this.drop;
+                if(this.drop){
+                    this.editor1.undestroy();
+                    this.editor1.$txt.slideDown(300);
+
+                }
+                else{
+                    this.editor1.$txt.slideUp();
+                    this.editor1.destroy();
+                    $('#edit1').hide();
+                    
+                }
+                
+            },
             submit: function (event) {
                 event.preventDefault();
                 var that=this;
@@ -131,26 +172,18 @@ function initVM(blog) {
                 else{
                     postBlogFirst()
                 }
-                // setTimeout(function(){
+
                     function postBlogFirst(){
                           var $form = $('#vm').find('form');
-                $form.postJSON(action, {name:that.name,summary:that.summary,content:that.content,image:that.image}, function (err, r) {
+                $form.postJSON(action, {name:that.name,summary:that.summary,content:that.content,image:that.image,tagnames:that.tagnames}, function (err, r) {
                     if (err) {
                         showInfo(err);
                     }
                     else {
-                       
                          return location.assign('/blog/'+r.id);
                     }
                 });
                     }
-
-                    
-                // },1000) 
-
-              
-
-
           
             }
         }
@@ -174,7 +207,8 @@ function initVM(blog) {
             name: '',
             summary: '',
             content: '',
-            image:''
+            image:'',
+            tagnames:[]
         });
     }
   
@@ -195,25 +229,28 @@ function initVM(blog) {
             </ul>
         </div>
 
+<template id="tag-component">
+    
+</template>
 
-  
+  <div class="tagboxs"><span class="tagbox" v-for="tagname in tagnames"><i class="fa fa-tag"></i><span class="tag" v-text="tagname"></span><i v-on:click="deletetag(tagname)" class="fa fa-times"></i></span></div><input id="tagtext" class="input12" type="text" v-on:keyup.enter="addtag" v-model="tagname" :placeholder="tagnum<5?'最多添加5个标签':'已经添加5个了'">
 
         <form v-on:submit="submit" class="formstyle2">
-                <div id="loading" class="uk-width-1-1 uk-text-center">
-        <span><i class="uk-icon-spinner uk-icon-medium uk-icon-spin"></i> 正在加载...</span>
-    </div>
+            <div id="loading" class="uk-width-1-1 uk-text-center">
+                <span><i class="fa fa-spinner"></i></span>
+            </div>
+            
                 <div class="box">
                     <input v-model="name" name="name" type="text" maxlength='50' placeholder="标题" class="input12">
                 
-                    <textarea id="edit1" v-model="summary" rows="4" name="summary" maxlength='200' placeholder="摘要" class="input12"></textarea>
+                    
+                    <textarea id="edit1" v-model="summary" rows="4" name="summary" maxlength='200' placeholder="摘要" class="input22"></textarea>
+                    <div v-on:click="droptoggle" class="droptoggle"><i class="fa" :class="drop==1?'fa-angle-double-up':'fa-angle-double-down'"></i></div>
+                   
               
                     <textarea id="edit2" v-model="content" rows="16" name="content" maxlength='500' placeholder="正文" class="input22" ></textarea>
                 </div>
-          
-            <div class="buttonbox">
-                <button class="button" type="submit">发表</button>
-                <a href="/" class="whitebutton">取消</a>
-            </div>
+                <button class="blue_button" type="submit">发表</button>
         </form>
 </div>
 {% endblock %}
