@@ -17,7 +17,12 @@ var itemslist = new Vue({
 var userinfobox  = new Vue({
       el:'#vm',
       data:{
+
         followstate:{{user.followstate}},
+        userid:'{{user.id}}',
+        gender:{% if user.gender==1 or user.gender==0 %}{{user.gender}} {%else%} ''{%endif%},
+        age:{% if user.age %}{{user.age}} {%else%} ''{%endif%},
+        address:{% if user.address %}'{{user.address}}' {%else%} '' {%endif%},
         page:''
       },
       methods:{
@@ -162,7 +167,7 @@ var tags =new Vue({
 </div>
 </div>
     <a href="/user/{{user.name}}"><img width="120" class="round" height="120" src="{{ user.image }}"></a>
-    <h2>{{ user.name }}</h2>
+    <h2>{{ user.name }} <span v-if="gender==1"><i class="fa fa-male blue"></i></span><span v-if="gender===0"><i class="fa fa-female red"></i></span></h2><div class="basebox"><span v-if="age" v-text="'年龄：'+age"></span> <span v-if="address" v-text="'所在地：'+address"></span></div>
     <button v-on:click="followuser" v-if="'{{ __user__.id }}' &&'{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" :class="followstate?'undobutton':'dobutton'" v-text="followstate?'取关':'关注'"></botton>   
 </div>
 <div class="bloglist">
@@ -248,6 +253,7 @@ var tags =new Vue({
 </ul>
   {%endif%} -->
 <ul v-if="tagnum" class="tagslist">
+<li class="taghead"><span><i class="fa fa-tags"></i><span>标签  </span></span></li>
 <li v-for="tag in tags">
 <span><i class="fa fa-tag"></i>
 <a :href="'/user/{{user.name}}/tag/'+tag.name"><span class="tag" v-text="tag.name"></span></a><span v-text="'('+tag.num+')'"></span></span>

@@ -118,8 +118,14 @@ function initVM(blog) {
                 if(this.tagnum>=5){
                     return showInfo("最多添加五个标签",1);
                 }
+                for(oldtagname of this.tagnames){
+                if(oldtagname ==this.tagname){
+                    this.tagname='';
+                    return showInfo('不能用相同标签',1);
+                }
+                }
                 this.tagnum++;
-                this.tagnames.push(this.tagname);
+                this.tagnames.push(this.tagname.trim());
                 if(this.tagnames.length>5){
                     this.tagnames=this.tagnames.slice(0,5);
 

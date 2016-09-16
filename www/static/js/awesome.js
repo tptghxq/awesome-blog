@@ -19,7 +19,20 @@ if (! String.prototype.trim) {
         return this.replace(/^\s+|\s+$/g, '');
     };
 }
-
+//去重
+if (!Array.prototype.unique) {
+Array.prototype.unique = function(){
+ var res = [];
+ var json = {};
+ for(var i = 0; i < this.length; i++){
+  if(!json[this[i]]){
+   res.push(this[i]);
+   json[this[i]] = 1;
+  }
+ }
+ return res;
+}
+}
 if (! Number.prototype.toDateTime) {
     var replaces = {
         'yyyy': function(dt) {

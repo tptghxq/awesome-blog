@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="/static/css/jquery.Jcrop.min.css" type="text/css" />
 <script src="/static/js/upload.js"></script>
 <script src="/static/js/jquery.Jcrop.min.js"></script>
+<script src="/static/js/radioform.js"></script>
 <style type="text/css">
     #headphotobox{
         min-height:600px;
@@ -142,9 +143,44 @@ var pw = new Vue({
         	}
         });
 
-    });
+ 
 
+var basicset = new Vue({
+    el:'#base',
+    data:{
+        gender:'',address:'',age:''
+    },methods:{
+        submit:function(event){
+            event.preventDefault();
+            if(!this.gender){
+               showInfo('性别不能为空',1) 
+            }
+            if (!parseInt(this.age.trim()) ||parseInt(this.age.trim()).length==0||parseInt(this.age.trim())>150 || parseInt(this.age.trim())<0) {
+                    return showInfo('请输入正确年龄',1);
+                }
+            if(this.address.length<2){
+                return showInfo('请输入正确地址',1)
+            }          
+            var $form = $('#base');
+            $form.find('button').first().addClass('disabled');
+            that=this;
+            $form.postJSON('/api/setting/base', 
+                    {
+                    age:that.age.trim(),
+                    address: that.address.trim(),
+                    gender: that.gender
+                    }, 
+                    function (err, r) {
+                    if (!err) {
+            $form.find('button').first().removeClass('disabled');
+            $form.find('button').first().text('设置成功');
+                    }
+                });
+        }
+    }
+});
 
+   });
 </script>
 
 {% endblock %}
@@ -161,14 +197,31 @@ var pw = new Vue({
     </div>
     <div>
 
-		<form id="base" v-on:submit="submit" class="formstyle1 toggle">
-                <div class="box">
-                    <input class="input1" v-model="name" type="text" maxlength="16" placeholder="{{__user__.name}}">
-                    <input class="input2" v-model="email" type="text" maxlength="16" placeholder="{{__user__.email}}">
-        		</div>	
-        <div class="box">
-        <button type="submit" class="blue_button"><i class="fa fa-wrench"></i>更改</button>	
-        </div>  
+		<form id="base" v-on:submit="submit" class="toggle">
+              <div class="radiobox">
+                <fieldset class="radios">
+                <span>性别</span>
+                    <label for="radio1" class="label_radio">
+                    <i class="fa fa-male"></i>
+                    <input id="radio1" name="sex" v-model="gender" type="radio" value="1">
+                   
+                    </label>
+
+                     <label for="radio2" class="label_radio"> 
+                     <i class="fa fa-female"></i>
+                     <input id="radio2" name="sex" v-model="gender" type="radio" value="0">
+                    </label>
+                </fieldset>
+               
+                
+                    <input class="input" v-model="age" type="text" maxlength="3" placeholder="年龄">
+                   
+                    <input class="input" v-model="address" type="text" maxlength="16" placeholder="地址">
+
+       </div>
+       
+        <button type="submit" class="blue_button"><i class="fa fa-wrench"></i>设置</button>	
+     
         </form>       		
 	
 	<form id="pw" v-on:submit="submit" class="formstyle1 toggle" enctype="multipart/form-data">   
@@ -208,4 +261,5 @@ var pw = new Vue({
                
     </div>
 </div>
+
 {% endblock %}

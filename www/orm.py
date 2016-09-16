@@ -98,6 +98,10 @@ class IntField(Field):
     def __init__(self, name=None, primary_key=False, default=0):
         super().__init__(name, 'int', primary_key, default)
 
+class TinyIntField(Field):
+
+    def __init__(self, name=None, primary_key=False, default=0):
+        super().__init__(name, 'tinyint', primary_key, default)
 
 class SmallIntField(Field):
 

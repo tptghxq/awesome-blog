@@ -392,7 +392,7 @@ def getuser(name,request,*,page='1'):
         blogs = []
     else:
         blogs = yield from Blog.findAll('user_name=?',[name],orderBy='created_at desc', limit=(page.offset, page.limit))
-    tags = yield from Tag.findAll('user_id=?',user.id)
+    tags = yield from Tag.findAll('user_id=?',[user.id],orderBy='num desc')
     return {
         '__template__': 'user.html',
         'page': page,
@@ -686,6 +686,18 @@ def change_password(*, email, passwd,newPassword):
     yield from user.update()
     logging.info("%d 的密码修改成功" % user.email)
     return dict(message='sussess')
+
+@post('/api/setting/base')
+def setbase(request,*,age,gender,address):
+    user = request.__user__
+    if user is None:
+        raise APIPermissionError('请登录')
+    user.age = age
+    user.gender=gender
+    user.address=address
+    yield from user.update()
+    logging.info('ssssssssssssssssssssss而温热污染无人ssssssssssssssssssssssssssss')
+    return({'message':1})
 
 @get('/signout')
 def signout(request):

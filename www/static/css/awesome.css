@@ -88,7 +88,13 @@ a.disabled,button.disabled {
     border-radius: 3px;
 }
 
-
+.input {
+display: block;
+    background: none;
+    border: 0;
+    padding: 15px 10px;
+    color: #222;
+}
 .input1 {
     width: 360px;
     background: none;
@@ -154,16 +160,15 @@ a.disabled,button.disabled {
 }
 .circlebutton{
   cursor: pointer;
-
-    background: none;
-    color: #fff;
-    border: 2px solid #fefefe;
+margin:0 1em;
+    background: #fff;
+    color: #191919;
     border-radius: 50%;
     padding: 11px 13px;
 }
 .circlebutton:hover{
-    background-color: #fefefe;
-  color: #011122;
+    background-color: #00A5E2;
+  color: #fff;
 }
 .blue_button:hover {
   background: #00A5E2;
@@ -489,6 +494,9 @@ a:hover{
 }
 .articlebox .time{
   font-size: 12px;
+    color: #999;
+  font-family: "Microsoft YaHei";
+
 }
 .articlebox .username{
   font-size: 15px;
@@ -936,7 +944,7 @@ background-color: none;
   position: relative;
 }
 .userbox{
-padding: 0 100px;
+padding: 0;
 position: relative;
 text-align: center;
 display: flex;
@@ -1230,7 +1238,7 @@ word-break: break-all;     /*使英文也换行*/
   font-family: 'Microsoft YaHei','STXihei';
 }
 .blue{
-  color: #B2D4F0;
+  color: #00A5E2;
 }
 .red{
   color: #E22D40;
@@ -1339,6 +1347,15 @@ height: 0px;
   
   margin-left: 50px;
 }
+.basebox{
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+.basebox span {
+  margin-right: 1em;
+}
 .infobox a{
   color: #888787;
 }
@@ -1373,6 +1390,9 @@ cursor: pointer;
 flex: 0 1 5%;
 z-index: 1000;
 } 
+.triangleup:hover,.triangledown:hover{
+  color: #00A5E2;
+}
 .triangledown {   
 font-size: 40px;
 cursor: pointer;
@@ -1531,4 +1551,93 @@ float: none;
 }
 #hot{
   color: #E32D40;
+}
+/*radio style*/
+.radiobox { 
+  position: relative;
+  display: block;
+        width: 350px; 
+        padding: 18px 20px 0; 
+        margin:20px auto;
+        background-color: #fff;
+/*        background-image: -khtml-gradient(linear, left top, left bottom, from(#049cdb), to(#0064cd));
+        background-image: -moz-linear-gradient(#049cdb, #0064cd);
+        background-image: -ms-linear-gradient(#049cdb, #0064cd);
+        background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #049cdb), color-stop(100%, #0064cd));
+        background-image: -webkit-linear-gradient(#049cdb, #0064cd);
+        background-image: -o-linear-gradient(#049cdb, #0064cd);
+        background-image: linear-gradient(#049cdb, #0064cd);  */
+        -webkit-border-radius: 5px; 
+        -moz-border-radius: 5px; 
+        -khtml-border-radius: 5px; 
+        border-radius: 5px;      
+        -webkit-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
+        -moz-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
+        -khtml-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
+        box-shadow: 0 5px 12px rgba(0,0,0,.4); 
+      }
+
+      fieldset { 
+        display: inline;
+        border: 0; 
+     
+      }
+      label { 
+        display: inline; 
+        cursor: pointer; 
+        line-height: 20px; 
+        padding-bottom: 9px; 
+        text-shadow: 0 -1px 0 rgba(0,0,0,.2); 
+      }
+
+      .radios { 
+         padding: 0 0.5em ;
+         color: #151515;
+    /*    padding-top: 18px;*/
+      }
+      .radios span {
+        margin-right: 1em;
+      }
+      .label_check input,
+      .label_radio input { 
+        margin-right: 5px; 
+      }
+      .label_radio{
+        margin-right: 2em;
+      }
+      .has-js .label_check,
+      .has-js .label_radio { 
+        padding-left: 34px; 
+      }
+      
+      .has-js .label_radio, 
+      .has-js .label_check{ 
+        background: url(checkbox-radio-bg.png) no-repeat; 
+      }
+      .has-js .label_radio { 
+        background-position: 0 0; 
+      }
+      .has-js .label_check { 
+        background-position: 0 -100px
+      }
+      .has-js label.c_on { 
+        background-position: 0 -150px;
+      }
+      .has-js label.r_on { 
+        background-position: 0 -50px; 
+      }
+      .has-js .label_check input,
+      .has-js .label_radio input { 
+        position: absolute; 
+        left: -9999px; 
+      } 
+{
+  margin-bottom: 
+}
+.taghead{
+border-bottom: 1px solid #111;
+padding:0.3em 0;
+}
+.taghead .fa-tags{
+  margin-right: 0.5em;
 }
