@@ -1,0 +1,127 @@
+{% extends '__base__.html' %}
+
+{% block title %}日志{% endblock %}
+
+
+{% block beforehead %}
+<script>
+	$(function(){
+		var vm = new Vue({
+			el:'.mainwrapper',data:{
+				mentions:[],
+				mentiontate:0,
+				newsnum:0,
+				page:'',
+				op:1,
+				op2:1
+			},ready:function(){
+				this.newsnum={{newsnum}};
+				{%for mention in mentions%}
+				var mention={};
+				mention.blog_id= '{{mention.blog_id}}';
+				mention.from_user_name ='{{mention.from_user_name}}';
+				mention.id = '{{mention.id}}';
+				mention.blog_name='{{mention.blog_name}}';
+				mention.news={{mention.news}};
+				this.mentions.push(mention);
+				{%endfor%}
+			},methods:{
+				clearallnews:function(){
+					that=this;
+					if(this.op2==1){
+						action='/clearallnews/atwho'
+					}
+					else if(this.op2==2){
+						action='/clearallnews/comment'
+					}
+						getJSON(action,function(err,r){
+							if(err){showInfo(err)}
+							else{
+								that.newsnum=0;
+								for (var i in that.mentions){
+									that.mentions[i].news=0;
+								}
+							}
+						})
+					
+				},
+				turnold:function(mention){
+					if(this.op2==2){
+						action='/turnold/comment'
+					}
+					else if(this.op2==1){
+						action='/turnold/atwho'
+					}
+					that=this;
+					getJSON(action,{id:mention.id},function(err,r){
+						if(err){
+							showInfo(err);
+						}
+						else{
+							mention.news=0;
+							if(that.newsnum>0){
+							that.newsnum--;
+							}
+							
+						}
+					})
+				},getitem:function(op,op2){
+					if(!'{{__user__.name}}'){
+						return
+					}
+					that=this;
+					op2=op2 || this.op2;
+					if(op2==1){
+						action='/mentions/getatwhos'
+					}
+					if(op2==2){
+						action='/mentions/getcomments'
+					}
+					if(op2==3){
+						action='/mentions/getfollow'
+					}
+					if(op2==4){
+						action='/mentions/getlike'
+					}
+						getJSON(action,{op:op},function(err,r){
+						if(err){
+							showInfo(err);
+						}else{
+							that.page=r.page;
+							that.mentions=r.mentions;
+							that.op=op;
+							that.op2=op2;
+							that.newsnum=r.newsnum;
+						}
+					});					
+				}
+			}
+		});
+	})
+</script>
+{% endblock %}
+
+
+{% block content %}
+<div class="mainwrapper">
+<div class="navbar">
+
+<a v-on:click="getitem(1,1)" :class="op2==1?'active':''" href="javascript:void(0)"><i></i>@@</a>
+<a v-on:click="getitem(1,2)" :class="op2==2?'active':''" href="javascript:void(0)"><i></i>评论</a>
+<a v-on:click="getitem(1,3)" :class="op2==3?'active':''" href="javascript:void(0)"><i></i>关注</a>
+<a v-on:click="getitem(1,4)" :class="op2==4?'active':''" href="javascript:void(0)"><i></i>喜欢</a>
+</div>
+<div class="mentionwrapper">
+<div class="tool-bar"><div><a href="javascript:void(0)" v-on:click="getitem(1)" :class="op==1?'red':''">全部提醒</a><a href="javascript:void(0)" :class="op==2?'red':''" v-on:click="getitem(2)">未读提醒<i v-if="newsnum" class="fa fa-sun-o" v-text="newsnum"></i></a></div><a v-on:click="clearallnews"  href="javascript:void(0)">消除所有未读</a></div>
+<ul class="mentionbox">
+<li v-if="!(op==2&&mention.news==0)&&op2==1" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.from_user_name"><span v-text="mention.from_user_name"></span></a>在文章<span v-text="mention.blog_name"></span>中 @ 了你。<a v-on:click="turnold(mention)" target="_blank" :href="'/blog/'+mention.blog_id+'#'+mention.id" class="blue"><span>立即查看</span></a></li>
+<li v-if="!(op==2&&mention.news==0)&&op2==2" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.user_name"><span v-text="mention.user_name"></span></a>评论了你的文章<span v-text="mention.blog_name"></span>！<a v-on:click="turnold(mention)" target="_blank" :href="'/blog/'+mention.blog_id+'#'+mention.id" class="blue"><span>立即查看</span></a></li>
+<li v-if="!(op==2&&mention.news==0)&&op2==3" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.from_user_name"><span v-text="mention.from_user_name"></span></a>关注了你。<a v-on:click="turnold(mention)" target="_blank" :href="'/user/'+mention.user_name" class="blue"><span>去他的主页看看吧。</span></a></li>
+<li v-if="!(op==2&&mention.news==0)&&op2==4" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.user_name"><span v-text="mention.user_name"></span></a>喜欢你的文章<a v-on:click="turnold(mention)" target="_blank" :href="'/blog/'+mention.blog_id" class="blue"><span v-text="mention.blog_name"></span></a></li>
+
+</ul>
+</div>
+</div>
+
+
+{% endblock %}

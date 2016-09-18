@@ -12,7 +12,10 @@
     <link rel="stylesheet" href="/static/dist/css/wangEditor.min.css" />
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="stylesheet" href="/static/css/jquery.Jcrop.min.css">
+    <link rel="stylesheet" href="/static/css/jquery.atwho.min.css" />
     <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/jquery.caret.js"></script>
+    <script src="/static/js/jquery.atwho.js"></script>
     <script src="/static/js/jquery.Jcrop.min.js"></script>
     <script src="/static/js/sha1.min.js"></script>
     <script src="/static/js/uikit.min.js"></script>
@@ -60,7 +63,7 @@ var header = new Vue({
                 <ul>
                 {% if __user__ %}
                     <li id="usera">
-                        <a class="userhead" v-bind:class="classObject" href="/user/{{__user__.name}}">
+                        <a target="_blank" class="userhead" v-bind:class="classObject" href="/user/{{__user__.name}}">
                         {% if __user__.image !='/static/img/user.png'%}
                         <img src="{{__user__.image}}" class="round" style="height:60px;width:auto;left:0,z-index:5">
                         {%else%}
@@ -70,8 +73,10 @@ var header = new Vue({
                             <ul>
 
                             <li><a href="/manage/blogs/create"><i class="fa fa-pencil"></i>写文</a></li>
+
                                 <li><a href="/setting"><i class="fa fa-gears"></i>设置</a></li>
-                                <li><a href="/service/dialogue"><i class="fa fa-volume-control-phone"></i>消息</a></li>
+                                <li><a href="/service/mentions"><i class="fa fa-bell"></i>提醒</a></li>
+                                <li><a href="/service/dialogue"><i class="fa fa-envelope"></i>信息</a></li>
                                 <li><a href="/signout"><i class="fa fa-sign-out"></i>登出</a></li>
                             </ul>
                     </li>

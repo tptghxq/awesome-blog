@@ -6,7 +6,7 @@
 
 <script>
 $(function(){
-    $('#vm').show();
+
     var follow = new Vue({
         el:'#vm',
         data:{
@@ -73,7 +73,7 @@ $(function(){
 
                 that=this;
                 $item.addClass('disabled');
-                postJSON('/api/getallblogs',{page:pageCode,order:order},function(err,r){
+                postJSON('/api/getallblogs',{page:pageCode,orderBy:order},function(err,r){
                     $item.removeClass('disabled');
                         if (err) {showInfo(err)}
                         else{
@@ -108,6 +108,7 @@ $(function(){
             }
         }
     });
+        $('#vm').show();
 });
 
 </script>
@@ -128,10 +129,10 @@ $(function(){
        <div class="articles">
        <article class="articlebox" v-for="blog in blogs">
         <div>            
-            <h2><a :href="'/blog/'+blog.id" v-text="blog.name"></a></h2>
+            <h2><a :href="'/blog/'+blog.id" v-text="blog.name" target="_blank"></a></h2>
             
            <div v-if="blog.summary" class="summary" v-html="blog.summary"></div>
-           <p class="bloginfo"><a class="author fragment" :href="'/user/'+blog.user_name" v-text="blog.user_name"></a><span class="fragment"><i class="fa fa-heart gred"></i><span class="num" v-text="blog.like_num"></span></span><span class="fragment"><i class="fa fa-eye gred"></i><span class="num" v-text="blog.read_num"></span></span>
+           <p class="bloginfo"><a class="author fragment" :href="'/user/'+blog.user_name" target="_blank" v-text="blog.user_name"></a><span class="fragment"><i class="fa fa-heart gred"></i><span class="num" v-text="blog.like_num"></span></span><span class="fragment"><i class="fa fa-eye gred"></i><span class="num" v-text="blog.read_num"></span></span>
            <span class="fragment"><i class="uk-icon-comments gred"></i><span class="num" v-text="blog.review_num"></span></span><span class="time fragment" v-text="blog.created_at.toDateTime('MM月 dd yyyy')"></span></p> 
         </div>
         <img class="blogimg" v-if="blog.image" :src="blog.image" style="height:100px;width:100px">

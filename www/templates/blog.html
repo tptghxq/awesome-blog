@@ -8,7 +8,44 @@
 
 var comment_url = '/api/blogs/{{ blog.id }}/comments';
 $(function () {
-    {% if __user__ %}
+
+
+  
+    var article = new Vue({
+        el:'#article',data:{
+            like_num:'{{blog.like_num}}',
+            likestate:{{blog.likestate}}
+        },
+        methods:{
+            addLikeBlog:function(blogid){
+            if (!'{{__user__.id}}'||('{{__user__.id}}'=='{{blog.user_id}}')) {
+                return 
+            }
+                $like=$('.likebutton');          
+            $like.addClass('disabled');
+            that=this;
+            postJSON('/api/likeblog',{blog_id:blogid},function(err,r){
+            $like.removeClass('disabled');
+            if(err){
+                showInfo(err);
+            }else{
+                that.likestate=r.likestate;
+                that.like_num=r.like_num;              
+            }
+        });}
+        }
+    });
+
+ {% if __user__ %}
+var pushcomment = new Vue({
+    el:'#pushcomment',
+    data:{username:''},
+    ready:function(){
+        this.username='{{__user__.name}}';
+        if(!this.username){
+            return
+         
+        } 
     var editor =new wangEditor('commentArea');
     editor.config.menus = [
         'bold',
@@ -38,6 +75,11 @@ $(function () {
         'undo',
         'redo',
     ];
+    //让输入框跟随编辑器div同步变化，才能使用at
+        editor.onchange=function(){
+        $edit=$('#commentArea');
+        $edit.val(this.$txt.html());
+    };
     editor.config.menuFixed = false;
         editor.config.emotions={
         'default':{
@@ -46,51 +88,61 @@ $(function () {
         }
     };
 editor.create();
- {% endif %}
-    var article = new Vue({
-        el:'#article',data:{
-            like_num:'{{blog.like_num}}',
-            likestate:{{blog.likestate}}
-        },
-        methods:{
-            addLikeBlog:function(blogid){
-            if (!'{{__user__.id}}'||('{{__user__.id}}'=='{{blog.user_id}}')) {
-                return 
-            }
-                $like=$('.likebutton');          
-            $like.addClass('disabled');
-            that=this;
-            postJSON('/api/likeblog',{blog_id:blogid},function(err,r){
-            $like.removeClass('disabled');
-            if(err){
-                showInfo(err);
-            }else{
-                that.likestate=r.likestate;
-                that.like_num=r.like_num;              
-            }
-        });}
-        }
-    });
+    editor.$txt.atwho({
+  at: "@",
+  limit:6,
+  callbacks: {    
+    remoteFilter: function(query, callback) {
+      $.getJSON("/getmentions", {term: query}, function(data) {
+        callback(data.usernames)
+      });
+    }
+  }
+});
 
-
-    
-    var $form = $('#form-comment');
-    $form.submit(function (e) {
+    },
+    methods:{
+        submit:function (e) {
+            var $form = $('#form-comment');
         e.preventDefault();
         var content = $form.find('textarea').val().trim();
         if (content==='') {
-          showInfo('请输入评论内容！',1);
+         return showInfo('请输入评论内容！',1);
         }
-        else{$form.postJSON(comment_url, { content: content }, function (err, result) {
+            var atNameAndIds=[];
+            var $content=$('<div>'+content+'</div>');
+            $content.find('.atwho-inserted').each(function(i,e){
+                var atNameAndId={};
+                var name = $(e).text().slice(1);
+                 //去除重复@@
+                if(atNameAndIds.length){
+                for(var i in atNameAndIds){
+                if  (atNameAndIds[i]['name']==name) {
+                    $(e).remove;
+                   return
+                }
+                }  
+                }
+                var uuid = generateUUID();
+                atNameAndId['name']=name;
+                atNameAndId['uuid']=uuid;
+                atNameAndIds.push(atNameAndId);                           
+                $(e).wrap("<a id='"+uuid+"' href='/user/"+name+"'></a>");
+            });
+            var content2=$content.html();
+
+        $form.postJSON(comment_url, { content: content2,atNameAndIds:atNameAndIds }, function (err, result) {
             if (!err) {
                location.reload();
             }
             
-        });}
+        });
         
-    });
-
-
+    }
+    }
+});
+     {% endif%}
+  
 Vue.component('doagree',{
     data:function(){
          return {
@@ -118,11 +170,76 @@ Vue.component('doagree',{
     }
 });
 
-new Vue({
-  el: '#allcomment'
+var agreeappli =new Vue({
+    el:'#allcomment',
+    data:{comments:[]},
+    ready:function(){
+        this.comments={{comments}};
+        // {%for comment in comments%}
+        //         var obj={};
+        //         obj.id= '{{comment.id}}';
+        //         obj.table ='{{comment.table}}';
+        //         obj.created_at='{{comment.created_at}}';
+        //         obj.user_name='{{comment.user_name}}';
+        //         obj.user_id='{{comment.user_id}}';
+        //         obj.user_image='{{comment.user_image}}';
+        //         obj.agreestate ='{{comment.agreestate}}';
+        //         obj.content='{{comment.content}}';
+        //         obj.disagree_num = {{comment.disagree_num}};
+        //         obj.agree_num={{comment.agree_num}};
+        //         this.comments.push(obj);
+        //     {%endfor%}
+    },methods:{
+        deleteItem:function(comment){
+            deleteItem(comment);
+        }
+    }
 });
-       
-        }); 
+    var boo = new Vue({
+  el: '.bookmark',data:{
+    bookmarks:[],
+    bookmarksnum:0,
+    togglestate:0,
+    movelongth:''
+  },
+  ready:function(){
+    this.dropbookmarks();
+    this.bookmarksnum=this.bookmarks.length;
+    $bookmark=$('.bookmark');
+      if(this.bookmarksnum){
+   setTimeout(function(){
+    this.movelongth =$bookmark.width()+$bookmark.css('padding-left').slice(0,-2)*2+5;
+     $bookmark.css('left','-'+this.movelongth+'px');
+     $bookmark.css('visibility','visible');
+     scrolltip('.bookmark a');
+   
+},200) ;
+ }
+    
+  },
+  methods:{ //methods不要忘记's'
+    dropbookmarks:function(){
+        that=this;
+        $('.maincontent').find(':header').each(function(i,e){
+            var bookmark = {};
+            bookmark.text=$(e).text();
+            bookmark.size=$(e).get(0).tagName;
+            that.bookmarks.push(bookmark);
+
+        });
+    },marktoggle:function(){
+        this.togglestate=!this.togglestate;
+        if(!this.togglestate){
+            $('.bookmark').animate({left:'-'+movelongth+'px'},100);
+        }
+        else{
+            $('.bookmark').animate({left:'0px'},300);
+        }
+    }
+
+  }
+});
+}); 
   
 </script>
 
@@ -131,7 +248,12 @@ new Vue({
 {% block content %}
 
 <div class="uk-width-medium-3-5 oneblog">
+<ul class="bookmark"><li v-for="bookmark in bookmarks"><span><i class="fa fa-bookmark"></i></span><a :href="'#tip'+$index" :class="{h1tag:bookmark.size=='H1',h2tag:bookmark.size=='H2',h3tag:bookmark.size=='H3',h4tag:bookmark.size=='H4',h5tag:bookmark.size=='H5',h6tag:bookmark.size=='H6'}" v-text="bookmark.text"></a></li><div class="marktoggle" v-on:click="marktoggle"><i class="fa" :class="togglestate?'fa-angle-double-left':'fa-angle-double-right'"></i></div></ul>
+
+
+
         <article id="article">
+
         <h2><span class="fragment">{{ blog.name }}</span>
         {% if __user__.admin or __user__.id==blog.user_id %}   
              <a class="fragment" onclick="deleteItem({{blog}})" href="javascript:void(0)"><i class="fa fa-trash"></i></a> 
@@ -146,15 +268,14 @@ new Vue({
                 <span class="fragment"><i class="fa fa-heart" :class="likestate?'redlikebutton':'likebutton'" v-on:click="addLikeBlog('{{blog.id}}',2)"></i><span class="num" v-text="like_num"></span></span><span class="fragment"><i class="fa fa-eye"></i><span class="num">{{blog.read_num}}</span></span>
              
         </div>
-            <div class="blogcontent">{{ blog.content|safe }}
+<div class="blogcontent"><div class="maincontent">{{ blog.content|safe }}</div>
 
-<!-- JiaThis Button BEGIN -->
 <div class="footer">  
 <div class="tagboxs">
 {% for tagname in tagnames %}
 <span class="tagbox">
 <i class="fa fa-tag"></i>
-<a href="/user/{{blog.user_name}}/tag/{{tag}}"><span class="tag">{{tagname}}</span></a>
+<a href="/user/{{blog.user_name}}/tag/{{tagname}}"><span class="tag">{{tagname}}</span></a>
 </span>
 {% endfor %}
 
@@ -168,27 +289,22 @@ new Vue({
     <li><a class="jiathis_button_cqq"><i class="fa fa-qq"></i></a></li>
     </ul> 
 </div>
-<!-- JiaThis Button END -->
+
 </div>
 
 
 </div>
 
         </article>
-
-        <hr class="uk-article-divider">
-
-   
-
         
  {% if __user__ %}
-
-        <article class="uk-comment">
+  <hr class="uk-article-divider">
+        <article id="pushcomment" class="uk-comment">
             <div class="uk-comment-header">
                 <div class="commentuser"><img class="round" src="{{ __user__.image }}">
                 <h3 class="uk-comment-title">{{ __user__.name }}</h3> </div>
                            <div class="uk-comment-body">
-                <form id="form-comment" class="uk-form">
+                <form id="form-comment" v-on:submit="submit" class="uk-form">
                 
                     <div class="uk-form-row">
                         <textarea id="commentArea" rows="6" placeholder="说点什么吧" style="width:100%;resize:none;border-radius:0;"></textarea>
@@ -201,36 +317,28 @@ new Vue({
             </div>
 
         </article>
-      <div class="comentnav"><h3><i class="fa fa-comments"></i>最新评论</h3></div>  
+   {% endif %}
 
-  
-    {% endif %}
+      <div class="comentnav"><h3><i class="fa fa-comments"></i>最新评论</h3></div>   
+ 
         <ul id="allcomment" class="uk-comment-list">
-            {% for comment in comments %}
-            <li id="{{comment.id}}">
+            <li v-for="comment in comments" :id="comment.id">
             <!-- 评论书签 -->
-
                 <article class="uk-comment">
- <doagree name="agreebox" agreestate2="{{comment.agreestate}}" agreenum2="{{comment.agree_num}}" disagreenum2="{{comment.disagree_num}}" commentid="{{comment.id}}"></doagree>
-                <a name="{{comment.id}}" class="disabled" href="javascript:void(0)"></a>
+ <doagree name="agreebox" :agreestate2="comment.agreestate" :agreenum2="comment.agree_num" :disagreenum2="comment.disagree_num" :commentid="comment.id"></doagree>
+                <a :name="comment.id" class="disabled" href="javascript:void(0)"></a>
                     <header class="uk-comment-header comment-header">
-                    <a href="/user/{{comment.user_name}}">
-                        <img class="round" style="width:55px;height:55px;margin-right:1em" src="{{ comment.user_image }}"></a>
-                        <h4 class="uk-comment-title"><span>{{ comment.user_name }} {% if comment.user_id==blog.user_id %}<span class="authoricon">(作者)</span>{% endif %} </span><span class="smarttime">{{ comment.created_at|datetime }}</span></h4>{% if __user__.admin or comment.user_id==__user__.id %}<a class="delete" style="position:absolute;right:1em;bottom:0.5em;" onclick="deleteItem({{comment}})" href="javascript:void(0)"><i class="fa fa-trash"></i></a>{% endif %}
-                
-                    </header>
-                    
-                    <div class="comment-body">
-                        {{ comment.content|safe }}
+                    <a :href="'/user/'+comment.user_name">
+                        <img class="round" style="width:55px;height:55px;margin-right:1em" :src="comment.user_image"></a>
+                        <h4 class="uk-comment-title"><span><span v-text="comment.user_name"></span><span v-if="comment.user_id=='{{blog.user_id}}'" class="authoricon">(作者)</span></span><span class="smarttime" v-text="comment.created_at"></span></h4><a v-if="'{{__user__.admin}}' || comment.user_id=='{{__user__.id}}'" class="delete" style="position:absolute;right:1em;bottom:0.5em;" v-on:click="deleteItem(comment)" href="javascript:void(0)"><i class="fa fa-trash"></i></a>     
+                    </header>         
+                    <div v-html="comment.content" class="comment-body">
                     </div>
-                    
                         
                 </article>
                 
             </li>
-            {% else %}
-            <p>暂时还没有人评论</p>
-            {% endfor %}
+            <p v-else>暂时还没有人评论</p>
         </ul>
 
 </div>

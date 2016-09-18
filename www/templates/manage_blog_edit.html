@@ -16,9 +16,9 @@ function initVM(blog) {
         el: '#vm',
         data: {name:blog.name,summary:blog.summary,content:blog.content,image:blog.image,editor1:'',editor2:'',drop:0,tagname:'',tagnum:blog.tagnames.length,tagnames:blog.tagnames},
         ready:function(){
+
             var editor1 = new wangEditor('edit1');
             editor1.config.menuFixed = false;
-          
             editor1.config.menus = [
         'source',
         'insertcode',
@@ -44,9 +44,6 @@ function initVM(blog) {
         'unlink'
     ];
     editor1.create();
-//      editor1.$txt.one("click",function(){
-//             editor1.$txt.text('');
-// });
     editor1.destroy();
     editor1.$txt.hide();
     $('#edit1').hide();
@@ -99,12 +96,55 @@ function initVM(blog) {
             data:'../../static/emotions/emotions.data'
         }
     };
+    editor2.onchange=function(){
+        $edit2=$('#edit2');
+        $edit2.val(this.$txt.html());
+    };
     editor2.create();
-    //     editor2.$txt.one("click",function(){
-    //         editor2.$txt.text('');
-    // });
-    this.editor2=editor2;
+    editor2.$txt.atwho({
+  at: "@",
+  limit:6,
+  callbacks: {  
+    remoteFilter: function(query, callback) {
+      $.getJSON("/getmentions", {term: query}, function(data) {
+        callback(data.usernames)
+      });
+    }
+  }
+});
+    // var cachequeryMentions = []; 
+    // var itemsMentions;
+    // var searchmentions = $('#titleinput').atwho({
+    //     at: "@",
+    //     callbacks: {
+    //             remoteFilter: function (query,callback) {
+    //                 var thisVal = query,
+    //                 self = $(this);
+    //                 if( !self.data('active') && thisVal.length >= 2 ){
+    //                     self.data('active', true);                            
+    //                     itemsMentions = cachequeryMentions[thisVal]
+    //                     if(typeof itemsMentions == "object"){
+    //                         callback(itemsMentions.usernames);
+    //                     }else
+    //                     {                            
+    //                         if (self.xhr) {
+    //                             self.xhr.abort();
+    //                         }
+    //                         self.xhr = $.getJSON("/getmentions",{
+    //                             term: thisVal
+    //                         }, function(data) {
+    //                             cachequeryMentions[thisVal] = data;
+    //                             callback(data.usernames);
+    //                         });
+    //                     }                            
+    //                     self.data('active', false);                            
+    //                 }                    
+    //             }
+    //         }
+    //     });
 
+
+    this.editor2=editor2;
         },
         methods: {
             deletetag:function(tagname){
@@ -112,18 +152,19 @@ function initVM(blog) {
                 this.tagnames.$remove(tagname);
             },
             addtag:function(){
+                //在火狐浏览器下第一次加标签特别慢，不懂
                 if(this.tagname.length<2){
                     return showInfo("最少要输入2个字符",1);
                 }
                 if(this.tagnum>=5){
                     return showInfo("最多添加五个标签",1);
                 }
-                for(oldtagname of this.tagnames){
-                if(oldtagname ==this.tagname){
+                for(i in this.tagnames){
+                if(this.tagnames[i] ==this.tagname){
                     this.tagname='';
                     return showInfo('不能用相同标签',1);
                 }
-                }
+                };
                 this.tagnum++;
                 this.tagnames.push(this.tagname.trim());
                 if(this.tagnames.length>5){
@@ -153,7 +194,6 @@ function initVM(blog) {
              
                 this.summary = handleHtml(this.editor1.$txt.html(),'<p><br></p>');
                 this.content = handleHtml(this.editor2.$txt.html(),'<p><br></p>');
-                
                 var imgs=this.editor2.$txt.find('img');
                 var firstBlogPhoto;
                 if(imgs.length){
@@ -180,8 +220,42 @@ function initVM(blog) {
                 }
 
                     function postBlogFirst(){
-                          var $form = $('#vm').find('form');
-                $form.postJSON(action, {name:that.name,summary:that.summary,content:that.content,image:that.image,tagnames:that.tagnames}, function (err, r) {
+                          var $form = $('#vm').find('form');                    
+                        var $content=$('<div>'+that.content+'</div>');
+                        $content.find(':header').each(function(i,e){
+                        $(e).before("<a class='tips' id='tip"+i+"'></a>");
+                         }); 
+                        var atNameAndIds=[];
+                        var searchlib=[];
+                        $content.find('.atwho-inserted').each(function(i,e){
+                            var atNameAndId={};
+
+                            var name = $(e).text().slice(1);
+                            //去除重复@@
+                            if(searchlib.length){
+                              for(var i in searchlib){
+                             if  (searchlib[i]['name']==name) {
+                                $(e).remove();
+                                return
+                             }
+
+                            }  
+                            }
+                            if($(e).parent().attr('id')){
+                            atNameAndId['name']=name;
+                            atNameAndId['uuid']=$(e).parent().attr('id');
+                            searchlib.push(atNameAndId);
+                                return
+                            }
+                            var uuid = generateUUID();
+                            atNameAndId['name']=name;
+                            atNameAndId['uuid']=uuid;
+                            searchlib.push(atNameAndId);
+                            atNameAndIds.push(atNameAndId);                           
+                            $(e).wrap("<a id='"+uuid+"' href='/user/"+name+"'></a>");
+                        });
+                        var content=$content.html();
+                       $form.postJSON(action, {name:that.name,summary:that.summary,content:content,image:that.image,tagnames:that.tagnames,atNameAndIds:atNameAndIds}, function (err, r) {
                     if (err) {
                         showInfo(err);
                     }
@@ -189,6 +263,7 @@ function initVM(blog) {
                          return location.assign('/blog/'+r.id);
                     }
                 });
+ 
                     }
           
             }
@@ -247,7 +322,7 @@ function initVM(blog) {
             </div>
             
                 <div class="box">
-                    <input v-model="name" name="name" type="text" maxlength='50' placeholder="标题" class="input12">
+                    <input v-model="name" id="titleinput" name="name" type="text" maxlength='50' placeholder="标题" class="input12">
                 
                     
                     <textarea id="edit1" v-model="summary" rows="4" name="summary" maxlength='200' placeholder="摘要" class="input22"></textarea>
@@ -258,5 +333,6 @@ function initVM(blog) {
                 </div>
                 <button class="blue_button" type="submit">发表</button>
         </form>
+
 </div>
 {% endblock %}

@@ -50,6 +50,7 @@ class Comment(Model):
     __table__ = 'comments'
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
     blog_id = StringField(ddl='varchar(50)')
+    blog_name=StringField(ddl='varchar(50)')
     user_id = StringField(ddl='varchar(50)')
     agree_num = SmallIntField(default=0)
     disagree_num = SmallIntField(default=0)
@@ -58,6 +59,7 @@ class Comment(Model):
     content = TextField()
     created_at = FloatField(default=time.time)
     update_at = FloatField()
+    news = BooleanField(default=1)
 
 class Follow(Model):
     __table__ = 'follows'
@@ -67,14 +69,17 @@ class Follow(Model):
     to_user_name = StringField(ddl='varchar(50)')
     to_user_id = StringField(ddl='varchar(50)')
     created_at = FloatField(default=time.time)
-
+    news = BooleanField(default=1)
 
 class Appreciate(Model):
     __table__ = 'appreciates'
     id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    user_name=StringField(ddl='varchar(50)')
     user_id = StringField(ddl='varchar(50)')
+    blog_name=StringField(ddl='varchar(50)')
     blog_id = StringField(ddl='varchar(50)')
     created_at = FloatField(default=time.time)
+    news = BooleanField(default=1)
 
 class Agree(Model):
     __table__ = 'agrees'
@@ -106,3 +111,21 @@ class Tag_relation(Model):
     user_id = StringField(ddl='varchar(50)')
     tag_name = StringField(ddl='varchar(60)')
     blog_id = StringField(ddl='varchar(50)')
+
+class Blacklist(Model):
+    __table__='blacklists'
+    id = StringField(primary_key=True, default=next_id, ddl='varchar(50)')
+    from_user_id = StringField(ddl='varchar(50)')
+    to_user_id = StringField(ddl='varchar(50)')
+
+class Atwho(Model):
+    __table__='atwhos'
+    id = StringField(primary_key=True,ddl='varchar(13)')
+    from_user_id = StringField(ddl='varchar(50)')
+    from_user_name=StringField(ddl='varchar(50)')
+    to_user_id = StringField(ddl='varchar(50)')
+    to_user_name = StringField(ddl='varchar(50)')
+    blog_id = StringField(ddl='varchar(50)')
+    blog_name = StringField(ddl='varchar(50)')
+    created_at = FloatField(default=time.time)
+    news = BooleanField(default=1)

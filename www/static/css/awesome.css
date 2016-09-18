@@ -175,13 +175,13 @@ margin:0 1em;
 }
 .recbutton{
   padding: 0.4em 2em;
-  color: #fcfcfc;
+  color: #fff;
   font-size: 14px;
-  border: 2px solid #0f0f0f;
-  background-color: #0f0f0f;
+  border: 2px solid #393939;
+  background-color: #393939;
 }
 .recbutton:hover{
-  background-color: #fefefe;
+  background: none;
   color:#0b0b0b;
 }
 
@@ -473,7 +473,11 @@ border-top-right-radius: 0.1em 0.1em;
   color: #0f0f0f;
   padding:0 30px;
   border-radius: 3px;
-  box-shadow: 0 0 5px 3px #1e1e1e;
+ 
+   -webkit-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
+        -moz-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
+        -khtml-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
+        box-shadow: 0 5px 12px rgba(0,0,0,.4); 
 }
 .articlebox h2 {
   font-size: 18px;
@@ -747,7 +751,7 @@ justify-content: flex-start;
     position: relative;
 }
 .formstyle2{
-    width: 800px;
+    max-width: 800px;
    position: relative;
     display: flex;
     flex-direction: column;
@@ -755,6 +759,7 @@ justify-content: flex-start;
     text-align: center;
 }
 .formstyle2 .box{
+  max-width: 800px;
   margin-bottom: 50px;
     display: flex;
     position: relative;
@@ -1184,6 +1189,7 @@ color: #DC2C3E
 }
 .commentuser img{
   height: 60px;
+  width: 60px;
   margin-right:1.5em;
 }
 .likebutton{
@@ -1352,6 +1358,7 @@ height: 0px;
   flex-wrap: wrap;
   justify-content: flex-start;
   align-items: flex-start;
+  margin-bottom: 0.6em;
 }
 .basebox span {
   margin-right: 1em;
@@ -1427,7 +1434,7 @@ width: auto;
   border-top:2px solid #DDDDDD;
   display: flex;
   justify-content: space-between;
-  margin-top: 1em;
+  margin-top: 100%;/*针对猎豹浏览器*/
   padding: 1.5em 0;
 
 }
@@ -1465,7 +1472,7 @@ float: none;
   padding: 1.6em 1.4em 0 1.4em;
   border-radius: 0.2em;
   min-height: 500px;
-  position: relative;
+
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -1543,10 +1550,7 @@ float: none;
 .fa-wrench,.fa-upload{
   margin-right:1em;
 }
-.fa-pencil,.fa-gears,.fa-sign-out{
-  margin-right:0.5em;
-}
-.fa-volume-control-phone{
+.fa-pencil,.fa-gears,.fa-sign-out,.fa-envelope,.fa-bell{
   margin-right:0.5em;
 }
 #hot{
@@ -1640,4 +1644,186 @@ padding:0.3em 0;
 }
 .taghead .fa-tags{
   margin-right: 0.5em;
+}
+.tips{
+  visibility: hidden;
+  height: 0;
+  width: 0;
+}
+.markbox{
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+}
+.fa-angle-double-left,.fa-angle-double-right{
+  color: #1FC5F2;
+}
+.marktoggle:hover .fa-angle-double-left,.marktoggle:hover .fa-angle-double-right{
+  color:  #E22D40;
+}
+.marktoggle{
+  cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+  text-align: center;
+  align-self: center;
+  position: absolute;
+  height: 80px;
+  width: 15px;
+  top: 50%;
+  margin-top: -40px;
+  right: -16px;
+  border-radius:0 5px 5px  0;
+  border: 1px solid #888777;
+  border-left: 0;
+}
+.bookmark{
+  border-left: 4px solid #1FC5F2;
+  visibility:hidden;
+  z-index: 100;
+  margin:0;
+  outline: 0;
+list-style: none;
+position: fixed;
+
+top: 100px;
+padding:15px;
+max-width: 250px;
+min-height: 600px;
+background-color: #fff;
+border-radius: 0 3px 3px 0;
+display: block;
+/* overflow: hidden;*/
+ -webkit-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
+        -moz-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
+        -khtml-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
+        box-shadow: 0 5px 12px rgba(0,0,0,.4); 
+}
+.bookmark a{
+    color: #141414;
+}
+.bookmark a:hover{
+  color: #E22D40;
+}
+.bookmark li{
+  margin-bottom: 1em;
+}
+.fa-bookmark{
+  margin-right: 10px;
+}
+.h1tag{
+  font-size: 16px;
+  margin-left: 0;
+  margin-bottom: 1.5em;
+}
+.h2tag{
+  font-size: 14px;
+  margin-left: 1rem;
+    margin-bottom: 1.3em;
+}
+.h3tag{
+  font-size: 12px;
+  margin-left: 2rem;
+  margin-bottom: 1.1em;
+}
+.h4tag{
+  font-size: 11px;
+  margin-left: 3rem;
+  margin-bottom: 0.9em;
+}
+.h5tag{
+  font-size: 11px;
+  margin-left: 4rem;
+  margin-bottom: 0.7em;
+}
+.h6tag{
+  font-size: 10px;
+  margin-left: 5rem;
+  margin-bottom: 0.7em;
+}
+.navbar{
+  font-size: 18px;
+  position: relative;
+  flex: 0 0 20%;
+  min-width: 200px;
+  background-color: #fff;
+  border-right:1px solid #bbb;
+
+}
+.navbar a{
+  position: relative;
+  padding:20px 30px ;
+  display: block;
+
+}
+.navbar a.active{
+background-color: #00A5E2;
+color: #fff;
+}
+.mentionwrapper{
+  padding:0 1em;
+ 
+  position: relative;
+  flex: 0 0 70%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #fff;
+}
+.mainwrapper{
+  position: relative;
+  width: 1000px;
+  margin-top: 150px;
+  min-height: 600px;
+  display: flex;
+  justify-content: center;
+}
+.tool-bar a{
+  padding: 20px;
+  
+}
+.tool-bar{
+
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #777;
+}
+a{
+  color: #666;
+}
+a:hover{
+  color: #E22D40;
+}
+.onemention{
+  padding: 1em 0.5em;
+  width: 100%;
+}
+.mentionbox{
+  margin-top: 0;
+  width: 90%;
+}
+.mentionbox span{
+  margin: 0 0.5em;
+
+}
+.mentionbox li{
+  position: relative;
+  width: 100%;
+  padding:1em 0 ;
+  border-bottom: 1px dashed #bbb;
+
+}
+.fa-envira{
+  font-size:0.9em;
+  color: #3A972D;
+  position: absolute;
+  left: -1.5em;
+
+}
+.fa-sun-o{
+  color: #EDBC11;
+  font-size:11px;
 }

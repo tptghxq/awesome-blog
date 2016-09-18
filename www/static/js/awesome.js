@@ -613,3 +613,21 @@ names=path.split('/');
 lastname=names[names.length-1];
 return lastname;
 }
+
+function scrolltip(el){
+            $(el).click(function(){
+    $('html, body').animate({
+        scrollTop: $( $.attr(this, 'href') ).offset().top
+    }, 300);
+    return false;  //阻止原生事件
+});
+}
+function generateUUID() {
+var d = new Date().getTime();
+var uuid = 'xxxxxxxyxxxxx'.replace(/[xy]/g, function(c) {
+  var r = (d + Math.random()*16)%16 | 0;
+  d = Math.floor(d/16);
+  return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+});
+return uuid;
+};

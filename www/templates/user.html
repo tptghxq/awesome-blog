@@ -17,16 +17,14 @@ var itemslist = new Vue({
 var userinfobox  = new Vue({
       el:'#vm',
       data:{
-
-        followstate:{{user.followstate}},
+        followstate:{%if user%}{{user.followstate}}{%else%}''{%endif%},
         userid:'{{user.id}}',
         gender:{% if user.gender==1 or user.gender==0 %}{{user.gender}} {%else%} ''{%endif%},
         age:{% if user.age %}{{user.age}} {%else%} ''{%endif%},
-        address:{% if user.address %}'{{user.address}}' {%else%} '' {%endif%},
-        page:''
+        address:{% if user.address %}'{{user.address}}' {%else%} '' {%endif%}
       },
       methods:{
-
+      
         followuser: function(){
             if ('{{__user__.name}}' && '{{ user.id }}' != '{{ __user__.id }}') {
                 var $focusButton =$('#focusButton');
@@ -45,20 +43,6 @@ var userinfobox  = new Vue({
             }
         }
       }
-});
-var pagination=new Vue({
-    el:".pagination2",
-    data:{
-    pageCodes:getPageCodes('{{page.page_index}}','{{page.page_count}}')
-    },
-    methods:{
-        gotoPage:function(pageCode){
-            if(pageCode=='{{page.page_index}}'){
-                return;
-            }
-            gotoPage(pageCode);
-        }
-    }
 });
 
 Vue.component('focusone',{
@@ -112,7 +96,41 @@ Vue.component('focusone',{
 });
 var followlist = new Vue({
   el: '.userslist',
-  data:{items:[]}
+  data:{pageCodes:[],page:{}}
+  ,
+      ready:function(){
+        this.page['page_index']={{page.page_index}};
+         this.page['page_count']={{page.page_count}};
+        this.pageCodes=this.getPageCodes(this.page);
+      },methods:{
+          gotoPage:function(pageCode){
+            if(pageCode=='{{page.page_index}}'){
+                return;
+            }
+            gotoPage(pageCode);
+        },            getPageCodes: function(page) {
+                this.pageCodes=[];
+                this.pageCodes.push(page.page_index);
+                if(page.page_count-page.page_index<5){
+                       var i= page.page_count-page.page_index;
+                }
+                else{var i=5}
+                if(page.page_index<6){
+                    var j =page.page_index-1;
+                }
+                else{var j=5;}
+                  var pageCode=page.page_index;
+                    for(;i>0;i--){
+                        pageCode++;
+                        this.pageCodes.push(pageCode);                        
+                    }
+                var pageCode2=this.page.page_index;
+                    for(;j>0;j--){
+                        pageCode2--;
+                        this.pageCodes.unshift(pageCode2);                     
+                    }
+            },
+      }
 }); 
 //  {% if followings %}
 // followlist.items = {{followings}}
@@ -166,7 +184,7 @@ var tags =new Vue({
            </a>
 </div>
 </div>
-    <a href="/user/{{user.name}}"><img width="120" class="round" height="120" src="{{ user.image }}"></a>
+    <a target="_blank" href="/user/{{user.name}}"><img width="120" class="round" height="120" src="{{ user.image }}"></a>
     <h2>{{ user.name }} <span v-if="gender==1"><i class="fa fa-male blue"></i></span><span v-if="gender===0"><i class="fa fa-female red"></i></span></h2><div class="basebox"><span v-if="age" v-text="'年龄：'+age"></span> <span v-if="address" v-text="'所在地：'+address"></span></div>
     <button v-on:click="followuser" v-if="'{{ __user__.id }}' &&'{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" :class="followstate?'undobutton':'dobutton'" v-text="followstate?'取关':'关注'"></botton>   
 </div>
@@ -180,7 +198,7 @@ var tags =new Vue({
     {% for blog in blogs %}
         <li>
             <h2>
-            	<a href="/blog/{{ blog.id }}">
+            	<a  target="_blank" href="/blog/{{ blog.id }}">
             		{{ blog.name }}
             	</a>
             </h2>
@@ -231,27 +249,15 @@ var tags =new Vue({
        <!-- html有些标签有严格规定只能嵌入某些标签  -->      
        </li>
 {% endfor %}
-</ul>
-<div class="pagebox">
         <ul class="pagination2">
             <li v-for="pageCode in pageCodes"><a :class="pageCode=={{page.page_index}}?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
         </ul>
-</div> 
-</div>
-<!-- {% if tags %}
-<ul class="tagslist">
-{%for tag in tags%}
-    <li>
-    <span><i class="fa fa-tag"></i>
-<a href="/user/{{user.name}}/tag/{{tag.name}}"><span class="tag">{{tag.name}}</span></a><span>({{tag.num}})</span></span>
-
-{% if user.id == __user__.id%}
-<a href=""><i onclick="deletetag" class="fa fa-times"></i></a>
-{% endif %}
-</li>
-{% endfor %}  
 </ul>
-  {%endif%} -->
+<!-- <div class="pagebox"> -->
+
+<!-- </div>  -->
+</div>
+
 <ul v-if="tagnum" class="tagslist">
 <li class="taghead"><span><i class="fa fa-tags"></i><span>标签  </span></span></li>
 <li v-for="tag in tags">
