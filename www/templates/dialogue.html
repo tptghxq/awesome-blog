@@ -7,7 +7,7 @@
 	$(function(){
                   Vue.component('dialogue',{
                     data:function(){
-                        return {dialogues:[],page:{}}
+                        return {dialogues:[],page:{},diaslength:0,newslength:0}
                 },
                     props:['friend'],
                     template:'#onedialogue',
@@ -19,8 +19,20 @@
                     },
                     ready:function(){
                         this.getMessage(1);
+                        this.pollmessage();
                     },
                     methods:{
+                    pollmessage:function(){
+                         that=this;
+                        t=10000/(1+this.newslength);
+                        this.diaslength=this.dialogues.length;
+                        setTimeout(function(){
+                            that.getMessage(2);
+                            that.newslength=that.dialogues.length-that.diaslength;
+                            that.diaslength=that.dialogues.length;
+                            that.pollmessage();
+                        },t);
+                    },
                     getMessage: function(op,pagecode) {
                     that=this;
                     pagecode=pagecode||1;
@@ -139,6 +151,7 @@
             }
         }
     });
+
 	});
 </script>
 {% endblock %}
@@ -160,7 +173,8 @@
             </div>
             <div class="diatime" v-text="dialogue.created_at.toDateTime()"></div>
             </div>
-             <div v-on:click="loadmore" v-if="page.page_count&&page.page_index!=page.page_count" class="loadmore">加载更多</div>
+       <div v-on:click="loadmore" v-if="page.page_count&&page.page_index!=page.page_count" class="loadmore">加载更多</div>
+             
   </div>  
 
 </template>

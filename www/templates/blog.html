@@ -150,12 +150,16 @@ Vue.component('doagree',{
             agreestate:this.agreestate2,
             agreenum:this.agreenum2,
             disagreenum:this.disagreenum2,
+            username:'{{__user__.name}}'
          }
         },
     props:['agreestate2','commentid','agreenum2','disagreenum2'],
     template:'<div class="agreebox"><i class="fa fa-sort-up triangleup" :class="{upactive:agreestate==1}" v-on:click="opagree(1,$event)"></i><div v-text="agreenum"></div><div v-text="disagreenum"></div><i class="fa fa-sort-desc triangledown" :class="{downactive:agreestate==-1}" v-on:click="opagree(-1,$event)"></i></div>',
     methods:{
     opagree:function(op,event){
+        if(!this.username){
+            return
+        }
     $(event.target).addClass('disabled'); 
             that=this;
     postJSON('/api/agree',{comment_id:that.commentid,op:op},function(err,r){
@@ -344,25 +348,6 @@ var splipage = new Vue({
             {% endfor %}
 
         </ul>
- 
-   <!--      <ul id="allcomment" class="uk-comment-list">
-            <li v-for="comment in comments" :id="comment.id">
-                <article class="uk-comment">
- <doagree name="agreebox" :agreestate2="comment.agreestate" :agreenum2="comment.agree_num" :disagreenum2="comment.disagree_num" :commentid="comment.id"></doagree>
-                <a :name="comment.id" class="disabled" href="javascript:void(0)"></a>
-                    <header class="uk-comment-header comment-header">
-                    <a :href="'/user/'+comment.user_name">
-                        <img class="round" style="width:55px;height:55px;margin-right:1em" :src="comment.user_image"></a>
-                        <h4 class="uk-comment-title"><span><span v-text="comment.user_name"></span><span v-if="comment.user_id=='{{blog.user_id}}'" class="authoricon">(作者)</span></span><span class="smarttime" v-text="comment.created_at"></span></h4><a v-if="'{{__user__.admin}}' || comment.user_id=='{{__user__.id}}'" class="delete" style="position:absolute;right:1em;bottom:0.5em;" v-on:click="deleteItem(comment)" href="javascript:void(0)"><i class="fa fa-trash"></i></a>     
-                    </header>         
-                    <div v-html="comment.content" class="comment-body">
-                    </div>
-                        
-                </article>
-                
-            </li>
-            <p v-else>暂时还没有人评论</p>
-        </ul> -->
                 <ul class="pagination">
             <li v-for="pageCode in pageCodes"><a :class="pageCode=={{page.page_index}}?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
         </ul>

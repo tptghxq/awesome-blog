@@ -27,7 +27,7 @@
     $(function(){
         Vue.config.debug = true;
         var firstname = location.pathname.split('/')[1];
-var header = new Vue({
+var headnav = new Vue({
     el:".main-header",
     data:{
         classObject:{
@@ -38,7 +38,19 @@ var header = new Vue({
         },
         classObject3:{
             'blueactive':firstname=='manage'
-        }
+        },follownews:0,atnews:0,allcount:0,dianews:0,username:'{{__user__.name}}'
+    },ready:function(){
+        if(!this.username){return}
+            that=this;
+        getJSON('/getallnews',function(err,r){
+            if(err){showInfo(err)}
+                else{
+                    that.follownews=r.follownews;
+                    that.atnews=r.atnews;
+                    that.allcount=r.allcount;
+                    that.dianews=r.dianews;
+                }
+        })
     }
 });
     });
@@ -63,19 +75,20 @@ var header = new Vue({
                 <ul>
                 {% if __user__ %}
                     <li id="usera">
-                        <a target="_blank" class="userhead" v-bind:class="classObject" href="/user/{{__user__.name}}">
+                        <a target="_blank" class="userhead" v-bind:class="classObject" href="/user/{{__user__.name}}"><i v-if="allcount" class="fa fa-circle mention-icon2"></i>
                         {% if __user__.image !='/static/img/user.png'%}
                         <img src="{{__user__.image}}" class="round" style="height:60px;width:auto;left:0,z-index:5">
                         {%else%}
                         <i class="fa fa-user"></i> {{ __user__.name }}
                           {%endif%}
+                          
                           </a>
                             <ul>
 
                             <li><a href="/manage/blogs/create"><i class="fa fa-pencil"></i>写文</a></li>
 
                                 <li><a href="/setting"><i class="fa fa-gears"></i>设置</a></li>
-                                <li><a href="/service/mentions"><i class="fa fa-bell"></i>提醒</a></li>
+                                <li><a href="/service/mentions"><i class="fa fa-bell"></i>提醒<i v-if="allcount" v-text="allcount" class="fa fa-circle mention-icon"></i></a></li>
                                 <li><a href="/service/dialogue"><i class="fa fa-envelope"></i>信息</a></li>
                                 <li><a href="/signout"><i class="fa fa-sign-out"></i>登出</a></li>
                             </ul>

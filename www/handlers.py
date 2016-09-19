@@ -267,15 +267,23 @@ def saveheadphoto(request,*,headValues):
     yield from user.update()
     return{'message':1}
 
-@post('/api/getallblogs')
-def getallblogs(*,page='1',orderBy='read_num desc'):
-    obj = yield from getobjectbypage(Blog,page=page,orderBy=orderBy)
+@post('/api/gethotblogs')
+def gethotblogs(*,page='1'):
+    obj = yield from getobjectbypage(Blog,where='read_num>?',args=[30],page=page,orderBy='read_num desc')
     return {
         'page': obj['page'],
         'blogs': obj['items']
     }
 
-@post('/api/getlike')
+@post('/api/getnewblogs')
+def getallblogs(*,page='1'):
+    obj = yield from getobjectbypage(Blog,page=page)
+    return {
+        'page': obj['page'],
+        'blogs': obj['items']
+    }
+
+@post('/api/getlikeblogs')
 def getlikeblogs(request,*,page='1'):
     fromuser = request.__user__
     if request.__user__ is None:
@@ -291,6 +299,21 @@ def getlikeblogs(request,*,page='1'):
         'page': obj['page']
         }
 
+@post('/api/getfocusblogs')
+def getFocusBlogs(request,*,page='1'):
+    fromuser = request.__user__
+    if request.__user__ is None:
+        raise APIPermissionError("请登录")
+    follows = yield from Follow.findAll('from_user_id=?',fromuser.id)
+    if len(follows) == 0:
+        raise APIError('你没有关注的人')
+    to_user_ids = [follow.to_user_id for follow in follows]
+    where='user_id in ('+','.join(len(to_user_ids)*'?')+')'
+    obj = yield from getobjectbypage(Blog,where=where,args=to_user_ids,page=page)
+    return {
+    'blogs':obj['items'],
+    'page':obj['page']
+    }
 
 @post('/api/focus/users')
 def getRelationsUsers(request,*,page='1'):
@@ -308,17 +331,9 @@ def getRelationsUsers(request,*,page='1'):
         friendIds=[]
         for follow in follows:
             if(follow.from_user_id==selfUser.id):
-                # firend={}
                 friendIds.append(follow.to_user_id)
-                # friend['id']=follow.to_user_id
-                # friend['name']=follow.to_user_name
-                # friends.append(firend)
             else:
-                # firend={}
                 friendIds.append(follow.from_user_id)
-                # friend['id']=follow.from_user_id
-                # friend['name']=follow.from_user_name
-                # friends.append(firend)
         where='id in ('+','.join(len(friendIds)*'?')+')'
         obj =yield from getobjectbypage(User,where=where,args=friendIds,page=page)
         friends=obj['items']
@@ -329,24 +344,6 @@ def getRelationsUsers(request,*,page='1'):
         'friends': friends ,
         'page': obj['page']
         }
-
-        
-
-@post('/api/focus/blogs')
-def getFocusBlogs(request,*,page='1'):
-    fromuser = request.__user__
-    if request.__user__ is None:
-        raise APIPermissionError("请登录")
-    follows = yield from Follow.findAll('from_user_id=?',fromuser.id)
-    if len(follows) == 0:
-        raise APIError('你没有关注的人')
-    to_user_ids = [follow.to_user_id for follow in follows]
-    where='user_id in ('+','.join(len(to_user_ids)*'?')+')'
-    obj = yield from getobjectbypage(Blog,where=where,args=to_user_ids)
-    return {
-    'blogs':obj['items'],
-    'page':obj['page']
-    }
 
 @get('/api/{name}/tag/{tagname}/delete')
 def deletetag(name,tagname,request):
@@ -365,7 +362,6 @@ def deletetag(name,tagname,request):
             yield from tag_relation.remove()
     yield from tag.remove()
     return {'message':1}
-
 
 @get('/user/{name}/tag/{tagname}')
 def gettagblogs(name,tagname,request,*,page='1'):
@@ -489,8 +485,6 @@ def getFollowing(name,request,*,page='1'):
         'followings': followings,
         'user':user
     }
-
-
 
 @get('/blog/{id}')
 def get_blog(id,request,*,page='1'):
@@ -992,8 +986,6 @@ def api_update_blog(id, request, *, name, summary, content,image,tagnames,atName
                 yield from atwho.save()
     return blog
 
-        
-
 @post('/api/blogs/{id}/delete')
 def api_delete_blog(request, *, id):
     blog = yield from Blog.find(id)
@@ -1031,7 +1023,6 @@ def getmentions(request,*,term):
     filterfonames = [filterfollowing.to_user_name for filterfollowing in filterfollowings]
     return {'usernames':filterfonames}
     
-
 @get('/turnold/{name}')
 def turnold(name,request,*,id):
     options={'atwho':Atwho,'conversation':Conversation,'comment':Comment,'follow':Follow,'like':Appreciate}
@@ -1078,12 +1069,26 @@ def clearallnews(name,request):
             yield from mention.update()
     return {'message':1}
 
-
-
 @get('/getarticles')
 def getarticles(*,id,page):
     obj=yield from getobjectbypage(Blog,where='user_id=?',args=[id],page=page)
     return {
     'articles':obj['items'],
     'page':obj['page']
+    }
+
+@get('/getallnews')
+def getallnews(request):
+    selfUser = request.__user__
+    if selfUser is None:
+        return {'message':0}
+    dianews= yield from Conversation.findNumber('count(id)','to_user_id=?',[selfUser.id])
+    atnews= yield from Atwho.findNumber('count(id)','to_user_id=?',[selfUser.id])
+    follownews= yield from Follow.findNumber('count(id)','to_user_id=?',[selfUser.id])
+    allcount=dianews+atnews+follownews
+    return {
+    'dianews':dianews,
+    'atnews':atnews,
+    'follownews':follownews,
+    'allcount':allcount
     }

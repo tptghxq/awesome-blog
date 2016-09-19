@@ -14,7 +14,7 @@ var itemslist = new Vue({
         lastName:lastName,
         pageCodes:[],
         page:{}
-    }
+    },
     ready:function(){
         this.page.page_index='{{page.page_index}}';
         this.page.page_count='{{page.page_count}}';
@@ -44,7 +44,7 @@ var itemslist = new Vue({
 var userinfobox  = new Vue({
       el:'#vm',
       data:{
-        followstate:{%if user%}{{user.followstate}}{%else%}''{%endif%},
+        followstate:{%if __user__.name%}{{user.followstate}}{%else%}''{%endif%},
         userid:'{{user.id}}',
         gender:{% if user.gender==1 or user.gender==0 %}{{user.gender}} {%else%} ''{%endif%},
         age:{% if user.age %}{{user.age}} {%else%} ''{%endif%},
@@ -173,11 +173,11 @@ var tags =new Vue({
     <button v-on:click="followuser" v-if="'{{ __user__.id }}' &&'{{ user.id }}' != '{{ __user__.id }}'" id="focusButton" :class="followstate?'undobutton':'dobutton'" v-text="followstate?'取关':'关注'"></botton>   
 </div>
 <div class="bloglist">
-
+<div>
                 <div class="title" v-if="lastName=='follower'">粉丝列表</div>
                 <div class="title" v-if="lastName=='following'">关注列表</div>
                 <div class="title" v-if="lastName!='follower'&&lastName!='following'">文章列表</div>
-
+{% if blogs %}
 <ul class="articlelist">
     {% for blog in blogs %}
         <li>
@@ -197,6 +197,9 @@ var tags =new Vue({
     {% endfor %}
 
 </ul>
+{% endif %}
+
+
     <ul class="userslist">
 {% for follow in followings %}
         <li class="oneuser">
@@ -212,7 +215,7 @@ var tags =new Vue({
             </div>
         </div>
         </div>
-       <div is="focusone" userid="{{follow.id}}" username="{{follow.name}}" followstate="{{follow.followstate}}"></div>  
+       <div is="focusone" userid="{{follow.id}}" v-if="'{{__user__.name}}'" username="{{follow.name}}" followstate="{{follow.followstate}}"></div>  
        <!-- html有些标签有严格规定只能嵌入某些标签  -->      
        </li>
 {% endfor %}
@@ -231,14 +234,14 @@ var tags =new Vue({
             </div>
         </div>
         </div>       
-         <div is="focusone"  userid="{{follow.id}}" username="{{follow.name}}" followstate="{{follow.followstate}}"></div>  
+         <div is="focusone" v-if="'{{__user__.name}}'" userid="{{follow.id}}" username="{{follow.name}}" followstate="{{follow.followstate}}"></div>  
        <!-- html有些标签有严格规定只能嵌入某些标签  -->      
        </li>
 {% endfor %}
   
 </ul>
-
-     <ul class="pagination">
+</div>
+     <ul class="pagination5">
             <li v-for="pageCode in pageCodes"><a :class="pageCode==page.page_index?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
     </ul>  
 </div>

@@ -540,10 +540,9 @@ function showInfo(info,op) {
 
         function getNewsNum(){
             that=this;
-            postJSON('/api/getnewsnum',{},function(err,r){
+            postJSON('/api/getnewsnum',function(err,r){
                 if(err){
                     showInfo(err);
-                    // that.getNewsNum();
                 }
                     else if(r.newsNum>0){
                             that.newsNum=r.newsNum;

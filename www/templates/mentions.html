@@ -1,6 +1,6 @@
 {% extends '__base__.html' %}
 
-{% block title %}日志{% endblock %}
+{% block title %}提醒{% endblock %}
 
 
 {% block beforehead %}
@@ -147,14 +147,9 @@
 <li v-if="!(op==2&&mention.news==0)&&op2==2" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.user_name"><span v-text="mention.user_name"></span></a>评论了你的文章<span v-text="mention.blog_name"></span>！<a v-on:click="turnold(mention)" target="_blank" :href="'/blog/'+mention.blog_id+'#'+mention.id" class="blue"><span>立即查看</span></a></li>
 <li v-if="!(op==2&&mention.news==0)&&op2==3" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.from_user_name"><span v-text="mention.from_user_name"></span></a>关注了你。<a v-on:click="turnold(mention)" target="_blank" :href="'/user/'+mention.from_user_name" class="blue"><span>去他的主页看看吧。</span></a></li>
 <li v-if="!(op==2&&mention.news==0)&&op2==4" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.user_name"><span v-text="mention.user_name"></span></a>喜欢你的文章<a v-on:click="turnold(mention)" target="_blank" :href="'/blog/'+mention.blog_id" class="blue"><span v-text="mention.blog_name"></span></a></li>
-
-
 </div>
 
 </ul>
-
-
-
 
 </div>
 	<ul class="pagination pagination3">
