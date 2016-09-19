@@ -7,11 +7,38 @@
 <script>
 $(function () {
     $('#vm').show();
-  var lastName=parsePath(location.pathname);
+var lastName=parsePath(location.pathname);
 var itemslist = new Vue({
     el:'.bloglist',
     data:{
-        lastName:lastName
+        lastName:lastName,
+        pageCodes:[],
+        page:{}
+    }
+    ready:function(){
+        this.page.page_index='{{page.page_index}}';
+        this.page.page_count='{{page.page_count}}';
+        this.getPageCodes('{{page.page_index}}','{{page.page_count}}');
+    },
+    methods:{
+        gotoPage:function(pageCode){
+        if(pageCode==this.page.page_index){
+            return;
+        }
+        gotoPage(pageCode);
+        },
+        getPageCodes: function(index,count) {
+            this.pageCodes=getPageCodes(index,count);
+            },
+        getarticles:function(page){
+            getJSON('/getarticles',{id:'{{user.id}}',page:page},function(err){
+                if(err){showInfo(err)}
+                else{
+                    that.page=r.page;
+                    that.articles=r.articles;
+                }
+            })
+        }
     }
 });
 var userinfobox  = new Vue({
@@ -63,12 +90,6 @@ Vue.component('focusone',{
                     return '关注'
                 }
             }
-            // dobu:function(){
-            //     if(this.followstate2==1){
-            //         return true
-            //     }
-            //     else{return false}
-            // }
         },
     props:['userid','username','followstate'],
     // followstate2==0 ,followstate2==1 ,判断语句要像这样写完整
@@ -94,53 +115,10 @@ Vue.component('focusone',{
         }
     }
 });
-var followlist = new Vue({
-  el: '.userslist',
-  data:{pageCodes:[],page:{}}
-  ,
-      ready:function(){
-        this.page['page_index']={{page.page_index}};
-         this.page['page_count']={{page.page_count}};
-        this.pageCodes=this.getPageCodes(this.page);
-      },methods:{
-          gotoPage:function(pageCode){
-            if(pageCode=='{{page.page_index}}'){
-                return;
-            }
-            gotoPage(pageCode);
-        },            getPageCodes: function(page) {
-                this.pageCodes=[];
-                this.pageCodes.push(page.page_index);
-                if(page.page_count-page.page_index<5){
-                       var i= page.page_count-page.page_index;
-                }
-                else{var i=5}
-                if(page.page_index<6){
-                    var j =page.page_index-1;
-                }
-                else{var j=5;}
-                  var pageCode=page.page_index;
-                    for(;i>0;i--){
-                        pageCode++;
-                        this.pageCodes.push(pageCode);                        
-                    }
-                var pageCode2=this.page.page_index;
-                    for(;j>0;j--){
-                        pageCode2--;
-                        this.pageCodes.unshift(pageCode2);                     
-                    }
-            },
-      }
-}); 
-//  {% if followings %}
-// followlist.items = {{followings}}
-//  {% endif %}
-//   {% if followers %}
-// followlist.items = {{followers}}
-//  {% endif %}
+var userli = new Vue({el:'.userslist'});
 
 var tags =new Vue({
-    el:'.ablog',
+    el:'.tagbox',
     data:{tags:[],tagnum:0},
     ready:function(){
         {% for tag in tags %}
@@ -153,7 +131,9 @@ var tags =new Vue({
         deletetag:function(tag){
             that=this;
             getJSON('/api/{{user.name}}/tag/'+tag.name+'/delete',function(err,r){
-                if(err){showInfo(err)}
+                if(err){
+                    showInfo(err)
+                }
                     else if(r.message==1){
                         that.tags.$remove(tag);
                         that.tagnum--;
@@ -162,6 +142,10 @@ var tags =new Vue({
         }
     }
 });
+
+
+
+
 });
 </script>
 
@@ -211,6 +195,7 @@ var tags =new Vue({
         </li>
         <hr class="uk-article-divider">
     {% endfor %}
+
 </ul>
     <ul class="userslist">
 {% for follow in followings %}
@@ -231,6 +216,7 @@ var tags =new Vue({
        <!-- html有些标签有严格规定只能嵌入某些标签  -->      
        </li>
 {% endfor %}
+
 {% for follow in followers %}
         <li class="oneuser">
         <div style="display:flex">
@@ -249,16 +235,15 @@ var tags =new Vue({
        <!-- html有些标签有严格规定只能嵌入某些标签  -->      
        </li>
 {% endfor %}
-        <ul class="pagination2">
-            <li v-for="pageCode in pageCodes"><a :class="pageCode=={{page.page_index}}?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
-        </ul>
+  
 </ul>
-<!-- <div class="pagebox"> -->
 
-<!-- </div>  -->
+     <ul class="pagination">
+            <li v-for="pageCode in pageCodes"><a :class="pageCode==page.page_index?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
+    </ul>  
 </div>
-
-<ul v-if="tagnum" class="tagslist">
+<div class="tagbox">
+    <ul v-if="tagnum" class="tagslist">
 <li class="taghead"><span><i class="fa fa-tags"></i><span>标签  </span></span></li>
 <li v-for="tag in tags">
 <span><i class="fa fa-tag"></i>
@@ -267,4 +252,6 @@ var tags =new Vue({
 </li>
 </ul>
 </div>
+</div>
+
 {% endblock %}

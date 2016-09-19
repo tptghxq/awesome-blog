@@ -473,7 +473,7 @@ border-top-right-radius: 0.1em 0.1em;
   color: #0f0f0f;
   padding:0 30px;
   border-radius: 3px;
- 
+ min-height: 600px;
    -webkit-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
         -moz-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
         -khtml-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
@@ -544,21 +544,30 @@ a:hover{
   border-radius: 1% 0 0 1%; 
 }
 .dialogueall .opobj{
+  min-width: 300px;
   position: relative;
   background-color: #0c0c0c;
   flex: 0 0 25%;
   margin-left: -1px;
 }
+.opobj ul li{
+  display: flex;
+  align-items: center;
+}
+
 .opobj ul a{
+  width: 100%;
   position: relative;
   display: block;
-    list-style: none;
-    padding: 20px 20px;
-    color: #fff;
+  list-style: none;
+  padding: 19.6px 20px;
+  color: #fff;
 }
+
 .opobj ul a:hover{
  background-color: #0099E2;
 }
+
 .opobj a.active{
   background-color: #1b1b1b;
 }
@@ -589,7 +598,7 @@ ul{
   padding: 1em;  /*设置padding，在ie,猎豹浏览器上输入框和按钮的比例不对，暂时不知道解决办法*/
     color: #222;
     resize:none;
-    overflow: hidden;
+  /*  overflow: hidden;*/
     border-radius: 0 0 0 1%; 
     border: 0;
 }
@@ -602,7 +611,6 @@ ul{
   height: 50em;
   width: 100%;
   border-bottom: 3px solid #2b2b2b;
-  position: relative;
   font-size: 17px;
   overflow: auto;
   padding-top: 50px;
@@ -617,7 +625,7 @@ ul{
 /* flex-wrap: wrap-reverse;*/
  word-wrap:break-word; 
  word-break: break-all;     /*使英文也换行*/
-  overflow:hidden;
+ /* overflow:hidden;*/
   margin: 0 2em;
   position: relative;
   padding: 0.5em 1em;
@@ -635,7 +643,7 @@ ul{
   font-size: 14px;
   word-wrap:break-word; 
   word-break: break-all;     /*使英文也换行*/
-  overflow:hidden;
+ /* overflow:hidden;*/
   margin: 0 2em;
   position: relative;
     min-width: 50px;
@@ -855,6 +863,7 @@ padding: 10px 0;
   margin-top: 150px;
 }
 .optable{
+
 margin-top: 3rem;
   position: relative;
   background-color: #ffffff;
@@ -892,6 +901,8 @@ margin-top: 3rem;
   margin-top: 70px;
   display: flex;
   justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
 }
 .pagination li a{
 border: 2px solid #fbfbfb;
@@ -906,21 +917,38 @@ background-color: none;
   color: #191919;
 }
 .pagination li a.active{
-    background-color: #fff;
+    background-color: rgba(255,255,255,0.6);
   color: #191919;
+}
+.pagination3{
+  position: relative;
+
+}
+.pagination4{
+  position: absolute;
+margin-bottom: 3px;
+margin-left: 3px;
+  bottom: 0rem;
+}
+.pagination4 li a{
+  margin:0;
+  border: 1px solid #fff;
+  padding: 0.2rem 0.6rem;
 }
 .pagebox{
   position: absolute;
-  bottom: 0;
   width: 100%;
- right: -170px;
+  display: flex;
+  bottom: 0;
+justify-content: center;
+ z-index: 9999;
 }
 .pagination2{
   position: relative;
   margin-top: 100px;
   display: flex;
   justify-content: center;
-
+ z-index: 9999;
 }
 .pagination2 li a{
 border: 2px solid #fefefe;
@@ -1004,7 +1032,8 @@ position: relative;
   position: relative;
   background-color: #fefefe;
  flex:  0 0 50%;
- min-height: 500px;
+ min-height: 600px;
+ max-width: 900px;
  padding: 1em;
  border-radius: 0.2rem;
 }
@@ -1046,7 +1075,8 @@ display: flex;
 flex-direction: column;
 justify-content: flex-start;
 align-items: flex-start;
-  min-height: 200;
+  min-height: 350px;
+  min-width: 8em;
   border-radius: 3px;
   background-color:#fff; 
 }
@@ -1055,6 +1085,10 @@ align-items: flex-start;
   width: 100%;
   display: flex;
 justify-content: space-between;
+align-items: center;
+}
+.tagslist li span{
+  margin-right: 0.5em;
 }
 .tagslist li a{
   color: #151515;
@@ -1694,7 +1728,6 @@ min-height: 600px;
 background-color: #fff;
 border-radius: 0 3px 3px 0;
 display: block;
-/* overflow: hidden;*/
  -webkit-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
         -moz-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
         -khtml-box-shadow: 0 5px 12px rgba(0,0,0,.4); 
@@ -1775,6 +1808,7 @@ color: #fff;
   position: relative;
   width: 1000px;
   margin-top: 150px;
+  margin-bottom: 5rem;
   min-height: 600px;
   display: flex;
   justify-content: center;
@@ -1826,4 +1860,27 @@ a:hover{
 .fa-sun-o{
   color: #EDBC11;
   font-size:11px;
+}
+
+.loadmore{
+  width: 100%;
+padding: 18px 0;
+  cursor: pointer;
+  background-color: rgba(61,61,61,0.2);
+  position: absolute;
+  top:0;
+  border-radius: 3px 0 0 0;
+display: flex;
+justify-content: center;
+align-items: center;
+color: #999;
+}
+.loadmore:hover{
+  color:#fff;
+background-color: rgba(0,153,226,0.3);
+}
+.fa-circle{
+  color: #44B036;
+  font-size: 13px;
+  margin-right: 2em;
 }

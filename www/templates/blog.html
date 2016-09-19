@@ -108,11 +108,12 @@ editor.create();
         var content = $form.find('textarea').val().trim();
         if (content==='') {
          return showInfo('请输入评论内容！',1);
-        }
+        }var searchlib=[];
             var atNameAndIds=[];
             var $content=$('<div>'+content+'</div>');
             $content.find('.atwho-inserted').each(function(i,e){
                 var atNameAndId={};
+                
                 var name = $(e).text().slice(1);
                  //去除重复@@
                 if(atNameAndIds.length){
@@ -126,7 +127,7 @@ editor.create();
                 var uuid = generateUUID();
                 atNameAndId['name']=name;
                 atNameAndId['uuid']=uuid;
-                atNameAndIds.push(atNameAndId);                           
+                atNameAndIds.push(atNameAndId);                         
                 $(e).wrap("<a id='"+uuid+"' href='/user/"+name+"'></a>");
             });
             var content2=$content.html();
@@ -171,30 +172,9 @@ Vue.component('doagree',{
 });
 
 var agreeappli =new Vue({
-    el:'#allcomment',
-    data:{comments:[]},
-    ready:function(){
-        this.comments={{comments}};
-        // {%for comment in comments%}
-        //         var obj={};
-        //         obj.id= '{{comment.id}}';
-        //         obj.table ='{{comment.table}}';
-        //         obj.created_at='{{comment.created_at}}';
-        //         obj.user_name='{{comment.user_name}}';
-        //         obj.user_id='{{comment.user_id}}';
-        //         obj.user_image='{{comment.user_image}}';
-        //         obj.agreestate ='{{comment.agreestate}}';
-        //         obj.content='{{comment.content}}';
-        //         obj.disagree_num = {{comment.disagree_num}};
-        //         obj.agree_num={{comment.agree_num}};
-        //         this.comments.push(obj);
-        //     {%endfor%}
-    },methods:{
-        deleteItem:function(comment){
-            deleteItem(comment);
-        }
-    }
+    el:'#allcomment'
 });
+
     var boo = new Vue({
   el: '.bookmark',data:{
     bookmarks:[],
@@ -239,6 +219,26 @@ var agreeappli =new Vue({
 
   }
 });
+
+var splipage = new Vue({
+  el: '.pagination',
+  data:{pageCodes:''}
+  ,
+      ready:function(){
+
+     this.getPageCodes('{{page.page_index}}','{{page.page_count}}');
+      },methods:{
+          gotoPage:function(pageCode){
+            if(pageCode=='{{page.page_index}}'){
+                return;
+            }
+            gotoPage(pageCode);
+        },      
+        getPageCodes: function(index,count) {
+                    this.pageCodes=getPageCodes(index,count);
+            },
+      }
+}); 
 }); 
   
 </script>
@@ -289,12 +289,8 @@ var agreeappli =new Vue({
     <li><a class="jiathis_button_cqq"><i class="fa fa-qq"></i></a></li>
     </ul> 
 </div>
-
 </div>
-
-
 </div>
-
         </article>
         
  {% if __user__ %}
@@ -320,10 +316,37 @@ var agreeappli =new Vue({
    {% endif %}
 
       <div class="comentnav"><h3><i class="fa fa-comments"></i>最新评论</h3></div>   
- 
-        <ul id="allcomment" class="uk-comment-list">
-            <li v-for="comment in comments" :id="comment.id">
+       <ul id="allcomment" class="uk-comment-list">
+            {% for comment in comments %}
+            <li id="{{comment.id}}">
             <!-- 评论书签 -->
+
+                <article class="uk-comment">
+ <doagree name="agreebox" agreestate2="{{comment.agreestate}}" agreenum2="{{comment.agree_num}}" disagreenum2="{{comment.disagree_num}}" commentid="{{comment.id}}"></doagree>
+                <a name="{{comment.id}}" class="disabled" href="javascript:void(0)"></a>
+                    <header class="uk-comment-header comment-header">
+                    <a href="/user/{{comment.user_name}}">
+                        <img class="round" style="width:55px;height:55px;margin-right:1em" src="{{ comment.user_image }}"></a>
+                        <h4 class="uk-comment-title"><span>{{ comment.user_name }} {% if comment.user_id==blog.user_id %}<span class="authoricon">(作者)</span>{% endif %} </span><span class="smarttime">{{ comment.created_at|datetime }}</span></h4>{% if __user__.admin or comment.user_id==__user__.id %}<a class="delete" style="position:absolute;right:1em;bottom:0.5em;" onclick="deleteItem({{comment}})" href="javascript:void(0)"><i class="fa fa-trash"></i></a>{% endif %}
+                
+                    </header>
+                    
+                    <div class="comment-body">
+                        {{ comment.content|safe }}
+                    </div>
+                    
+                        
+                </article>
+                
+            </li>
+            {% else %}
+            <p>暂时还没有人评论</p>
+            {% endfor %}
+
+        </ul>
+ 
+   <!--      <ul id="allcomment" class="uk-comment-list">
+            <li v-for="comment in comments" :id="comment.id">
                 <article class="uk-comment">
  <doagree name="agreebox" :agreestate2="comment.agreestate" :agreenum2="comment.agree_num" :disagreenum2="comment.disagree_num" :commentid="comment.id"></doagree>
                 <a :name="comment.id" class="disabled" href="javascript:void(0)"></a>
@@ -339,8 +362,10 @@ var agreeappli =new Vue({
                 
             </li>
             <p v-else>暂时还没有人评论</p>
+        </ul> -->
+                <ul class="pagination">
+            <li v-for="pageCode in pageCodes"><a :class="pageCode=={{page.page_index}}?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
         </ul>
-
 </div>
 <script type="text/javascript" src="http://v3.jiathis.com/code/jia.js" charset="utf-8"></script>
 {% endblock %}

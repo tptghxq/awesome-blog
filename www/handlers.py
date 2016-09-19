@@ -45,7 +45,7 @@ def getobjectbypage(Item,**kw):
     items = yield from Item.findAll(where,args,orderBy=orderBy, limit=(p.offset, p.limit))
     if Item==User:
         for item in items:
-                item.password="******"
+                item.passwd="******"
     return dict(page=p, items=items)
 
 def cropImage(fpath,tpath):
@@ -164,7 +164,7 @@ def getmention(request,*,page='1'):
     '__template__':'mentions.html',
     'mentions':obj['items'],
     'newsnum':newsnum,
-    'pgae':obj['page']
+    'page':obj['page']
     }
 
 @post('/api/dialogue/save')
@@ -172,20 +172,31 @@ def saveDialugue(request,*,content,friendId):
     user=request.__user__
     if user is None:
         raise APIPermissionError("请登录")
+    if not content:
+        return{'message':0}
     dialogue=Conversation(from_user_id=user.id,to_user_id=friendId,content=content)
     yield from dialogue.save()
     return {'message':1}
 
 @post('/api/dialogue/get')
-def getDialugue(request,*,friendId,page='1'):
+def getDialugue(request,*,friendId,op,page='1'):
     user=request.__user__
     if user is None:
         raise APIPermissionError("请登录")
-    where= 'from_user_id in (?,?) and to_user_id in (?,?)'
+    if op == 1:
+        where= 'from_user_id in (?,?) and to_user_id in (?,?)'
+    if op == 2:
+        where= 'news=1 and from_user_id in (?,?) and to_user_id in (?,?)'
     ids=[user.id,friendId,user.id,friendId]
-    obj = yield from getobjectbypage(Conversation,where=where,args=ids)
+    obj = yield from getobjectbypage(Conversation,where=where,args=ids,page=page)
+    dialogues=obj['items']
+    for dialogue in dialogues:
+        #如果是收信人请求就把信息变为已阅读状态
+        if dialogue.to_user_id == user.id:
+            dialogue.news=0
+            yield from dialogue.update()
     return {
-        'dialogues':obj['items'],
+        'dialogues':dialogues,
         'page':obj['page']
     }
 
@@ -283,10 +294,10 @@ def getlikeblogs(request,*,page='1'):
 
 @post('/api/focus/users')
 def getRelationsUsers(request,*,page='1'):
-    fromuser = request.__user__
-    if request.__user__ is None:
+    selfUser = request.__user__
+    if selfUser is None:
         raise APIPermissionError("请登录")
-    follows = yield from Follow.findAll('from_user_id=? or to_user_id=?',[fromuser.id,fromuser.id])
+    follows = yield from Follow.findAll('from_user_id=? or to_user_id=?',[selfUser.id,selfUser.id])
     if len(follows) ==0:
         return {
         'friends':[],
@@ -296,7 +307,7 @@ def getRelationsUsers(request,*,page='1'):
         friends=[]
         friendIds=[]
         for follow in follows:
-            if(follow.from_user_id==fromuser.id):
+            if(follow.from_user_id==selfUser.id):
                 # firend={}
                 friendIds.append(follow.to_user_id)
                 # friend['id']=follow.to_user_id
@@ -310,8 +321,12 @@ def getRelationsUsers(request,*,page='1'):
                 # friends.append(firend)
         where='id in ('+','.join(len(friendIds)*'?')+')'
         obj =yield from getobjectbypage(User,where=where,args=friendIds,page=page)
+        friends=obj['items']
+        for friend in friends:
+            newsnum = yield from Conversation.findNumber('count(id)','news=1 and to_user_id=? and from_user_id=?',[selfUser.id,friend.id])
+            friend.newsnum=newsnum
         return {
-        'friends': obj['items'],
+        'friends': friends ,
         'page': obj['page']
         }
 
@@ -777,7 +792,7 @@ def api_items(tablename,request,*,page='1'):
     return dict(page=obj['page'], items=obj['items'])
 
 @get('/mentions/getatwhos')
-def getatwho(request,*,page='1',op):
+def getatwho(request,*,op,page='1'):
     selfUser=request.__user__
     if selfUser is None:
         raise APIPermissionError('请登录')
@@ -795,7 +810,7 @@ def getatwho(request,*,page='1',op):
     }
 
 @get('/mentions/getfollow')
-def getfollowmentions(request,*,page='1',op):
+def getfollowmentions(request,*,op,page='1'):
     selfUser=request.__user__
     if selfUser is None:
         raise APIPermissionError('请登录')
@@ -813,7 +828,7 @@ def getfollowmentions(request,*,page='1',op):
     }
 
 @get('/mentions/getcomments')
-def getcomments(request,*,page='1',op):
+def getcomments(request,*,op,page='1'):
     selfUser=request.__user__
     if selfUser is None:
         raise APIPermissionError('请登录')
@@ -835,7 +850,7 @@ def getcomments(request,*,page='1',op):
     }
 
 @get('/mentions/getlike')
-def getlikementions(request,*,page='1',op):
+def getlikementions(request,*,op,page='1'):
     selfUser=request.__user__
     if selfUser is None:
         raise APIPermissionError('请登录')
@@ -1016,9 +1031,10 @@ def getmentions(request,*,term):
     filterfonames = [filterfollowing.to_user_name for filterfollowing in filterfollowings]
     return {'usernames':filterfonames}
     
+
 @get('/turnold/{name}')
 def turnold(name,request,*,id):
-    options={'atwho':Atwho,'conversation':Conversation,'comment':Comment}
+    options={'atwho':Atwho,'conversation':Conversation,'comment':Comment,'follow':Follow,'like':Appreciate}
     Mention = options.get(name,None)
     if Mention is None: 
         raise APIError('404')
@@ -1026,7 +1042,7 @@ def turnold(name,request,*,id):
     if selfUser is None:
         return{'message':0}
     mention=yield from Mention.find(id)
-    if Mention == Comment:
+    if Mention == Comment or Mention==Appreciate:
         blog = yield from Blog.find(mention['blog_id'],'id')
         if blog.get('user_id',None)!= selfUser.id:
             return{'message':0}
@@ -1039,22 +1055,22 @@ def turnold(name,request,*,id):
 
 @get('/clearallnews/{name}')
 def clearallnews(name,request):
-    options={'atwho':Atwho,'conversation':Conversation,'comment':Comment}
+    options={'atwho':Atwho,'conversation':Conversation,'comment':Comment,'follow':Follow,'like':Appreciate}
     Mention = options.get(name,None)
     if Mention is None: 
         raise APIError('404')
     selfUser=request.__user__
     if selfUser is None:
         return{'message':0}
-    if Mention == Comment:
+    if Mention == Comment or Mention==Appreciate:
         blogs = yield from Blog.findAll('user_id=?',selfUser.id)
         blog_ids= [blog.id for blog in blogs]
         where='news=1 and blog_id in ('+','.join(len(blog_ids)*'?')+')'
-        comments = yield from Comment.findAll(where,blog_ids)
-        if len(comments):
-            for comment in comments:
-                comment.news=0
-                yield from comment.update()
+        items = yield from Mention.findAll(where,blog_ids)
+        if len(items):
+            for item in items:
+                item.news=0
+                yield from item.update()
     else:
         mentions=yield from Mention.findAll('to_user_id=? and news=?',[selfUser.id,1])
         for mention in mentions:
@@ -1064,3 +1080,10 @@ def clearallnews(name,request):
 
 
 
+@get('/getarticles')
+def getarticles(*,id,page):
+    obj=yield from getobjectbypage(Blog,where='user_id=?',args=[id],page=page)
+    return {
+    'articles':obj['items'],
+    'page':obj['page']
+    }

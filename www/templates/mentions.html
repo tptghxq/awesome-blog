@@ -7,13 +7,14 @@
 <script>
 	$(function(){
 		var vm = new Vue({
-			el:'.mainwrapper',data:{
+			el:'.bigbox',data:{
 				mentions:[],
 				mentiontate:0,
 				newsnum:0,
-				page:'',
 				op:1,
-				op2:1
+				op2:1,
+				page:{},
+				pageCodes:[]
 			},ready:function(){
 				this.newsnum={{newsnum}};
 				{%for mention in mentions%}
@@ -25,7 +26,19 @@
 				mention.news={{mention.news}};
 				this.mentions.push(mention);
 				{%endfor%}
+				this.page.page_index='{{page.page_index}}';
+				this.page.page_count='{{page.page_coun}}';
+				this.getPageCodes('{{page.page_index}}','{{page.page_count}}');
 			},methods:{
+				gotoPage:function(pageCode){
+            if(pageCode==this.page.page_index){
+                return;
+            }
+            this.getitem(this.op,this.op2,pageCode);
+        },      
+        getPageCodes: function(index,count) {
+                    this.pageCodes=getPageCodes(index,count);
+            },
 				clearallnews:function(){
 					that=this;
 					if(this.op2==1){
@@ -33,6 +46,12 @@
 					}
 					else if(this.op2==2){
 						action='/clearallnews/comment'
+					}
+					else if(this.op2==3){
+						action='/clearallnews/follow'
+					}
+					else if(this.op2==4){
+						action='/clearallnews/like'
 					}
 						getJSON(action,function(err,r){
 							if(err){showInfo(err)}
@@ -52,6 +71,12 @@
 					else if(this.op2==1){
 						action='/turnold/atwho'
 					}
+					else if(this.op2==3){
+						action='/turnold/follow'
+					}
+					else if(this.op2==4){
+						action='/turnold/like'
+					}
 					that=this;
 					getJSON(action,{id:mention.id},function(err,r){
 						if(err){
@@ -65,10 +90,11 @@
 							
 						}
 					})
-				},getitem:function(op,op2){
+				},getitem:function(op,op2,pageCode){
 					if(!'{{__user__.name}}'){
 						return
 					}
+					pageCode=pageCode || '1';
 					that=this;
 					op2=op2 || this.op2;
 					if(op2==1){
@@ -83,7 +109,7 @@
 					if(op2==4){
 						action='/mentions/getlike'
 					}
-						getJSON(action,{op:op},function(err,r){
+						getJSON(action,{op:op,page:pageCode},function(err,r){
 						if(err){
 							showInfo(err);
 						}else{
@@ -92,6 +118,8 @@
 							that.op=op;
 							that.op2=op2;
 							that.newsnum=r.newsnum;
+							that.page=r.page;
+							that.getPageCodes(that.page.page_index,that.page.page_count);
 						}
 					});					
 				}
@@ -103,6 +131,7 @@
 
 
 {% block content %}
+<div class="bigbox">
 <div class="mainwrapper">
 <div class="navbar">
 
@@ -116,12 +145,20 @@
 <ul class="mentionbox">
 <li v-if="!(op==2&&mention.news==0)&&op2==1" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.from_user_name"><span v-text="mention.from_user_name"></span></a>在文章<span v-text="mention.blog_name"></span>中 @ 了你。<a v-on:click="turnold(mention)" target="_blank" :href="'/blog/'+mention.blog_id+'#'+mention.id" class="blue"><span>立即查看</span></a></li>
 <li v-if="!(op==2&&mention.news==0)&&op2==2" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.user_name"><span v-text="mention.user_name"></span></a>评论了你的文章<span v-text="mention.blog_name"></span>！<a v-on:click="turnold(mention)" target="_blank" :href="'/blog/'+mention.blog_id+'#'+mention.id" class="blue"><span>立即查看</span></a></li>
-<li v-if="!(op==2&&mention.news==0)&&op2==3" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.from_user_name"><span v-text="mention.from_user_name"></span></a>关注了你。<a v-on:click="turnold(mention)" target="_blank" :href="'/user/'+mention.user_name" class="blue"><span>去他的主页看看吧。</span></a></li>
+<li v-if="!(op==2&&mention.news==0)&&op2==3" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.from_user_name"><span v-text="mention.from_user_name"></span></a>关注了你。<a v-on:click="turnold(mention)" target="_blank" :href="'/user/'+mention.from_user_name" class="blue"><span>去他的主页看看吧。</span></a></li>
 <li v-if="!(op==2&&mention.news==0)&&op2==4" v-for="mention in mentions" class="onemention"><i v-if="mention.news" class="fa fa-envira"></i><a class="blue" :href="'/user/'+mention.user_name"><span v-text="mention.user_name"></span></a>喜欢你的文章<a v-on:click="turnold(mention)" target="_blank" :href="'/blog/'+mention.blog_id" class="blue"><span v-text="mention.blog_name"></span></a></li>
 
+
+</div>
+
+</ul>
+
+
+
+
+</div>
+	<ul class="pagination pagination3">
+            <li v-for="pageCode in pageCodes"><a :class="pageCode==page.page_index?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
 </ul>
 </div>
-</div>
-
-
 {% endblock %}

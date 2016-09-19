@@ -558,12 +558,23 @@ function showInfo(info,op) {
                 pageCodes.push(index);
                 if(count-index<5){
                        var i= count-index;
+                       if(count>9){
+                       var j=9-i;
+                       }
                 }
-                else{var i=5}
+                else{
+                    var i=4;
+                }
                 if(index<6){
-                    var j =index-1;
+                    var j=index-1;
+                    if(count>9){
+                    var i=9-j;
+                       }
+                }else{
+                    var j = j || 5;
                 }
-                else{var j=5;}
+
+
                   var pageCode=index;
                     for(;i>0;i--){
                         pageCode++;

@@ -24,26 +24,26 @@ $(function(){
                 },
         methods:{
             getPageCodes: function(page) {
-                this.pageCodes=[];
-                this.pageCodes.push(page.page_index);
-                if(page.page_count-page.page_index<5){
-                       var i= page.page_count-page.page_index;
-                }
-                else{var i=5}
-                if(page.page_index<6){
-                    var j =page.page_index-1;
-                }
-                else{var j=5;}
-                  var pageCode=page.page_index;
-                    for(;i>0;i--){
-                        pageCode++;
-                        this.pageCodes.push(pageCode);                        
-                    }
-                var pageCode2=this.page.page_index;
-                    for(;j>0;j--){
-                        pageCode2--;
-                        this.pageCodes.unshift(pageCode2);                     
-                    }
+                this.pageCodes=getPageCodes(page.page_index,page.page_count);
+                // this.pageCodes.push(page.page_index);
+                // if(page.page_count-page.page_index<5){
+                //        var i= page.page_count-page.page_index;
+                // }
+                // else{var i=5}
+                // if(page.page_index<6){
+                //     var j =page.page_index-1;
+                // }
+                // else{var j=5;}
+                //   var pageCode=page.page_index;
+                //     for(;i>0;i--){
+                //         pageCode++;
+                //         this.pageCodes.push(pageCode);                        
+                //     }
+                // var pageCode2=this.page.page_index;
+                //     for(;j>0;j--){
+                //         pageCode2--;
+                //         this.pageCodes.unshift(pageCode2);                     
+                //     }
             },
             getFocusBlogs:function(pageCode){
             

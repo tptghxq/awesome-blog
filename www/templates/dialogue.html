@@ -5,22 +5,61 @@
 {% block beforehead %}
 <script>
 	$(function(){
-                  
+                  Vue.component('dialogue',{
+                    data:function(){
+                        return {dialogues:[],page:{}}
+                },
+                    props:['friend'],
+                    template:'#onedialogue',
+                    events:{
+                        'parent-msg':function(msg){
+                              this.getMessage(2);
+
+                        }
+                    },
+                    ready:function(){
+                        this.getMessage(1);
+                    },
+                    methods:{
+                    getMessage: function(op,pagecode) {
+                    that=this;
+                    pagecode=pagecode||1;
+                    postJSON('/api/dialogue/get',{friendId:that.friend.id,op:op,page:pagecode},function(err,r){
+                        if (err) {showInfo(err)}
+                        else {
+                             if(op==1){
+                                that.dialogues=that.dialogues.concat(r.dialogues); 
+                                that.page=r.page;
+                            }
+                            else if(op==2){
+                                that.dialogues=r.dialogues.concat(that.dialogues);
+                            }
+                            
+                        }
+                            
+                    });
+            },loadmore:function(){
+                next = this.page.page_index+1;
+                this.getMessage(1,next);
+            }
+                    }
+                  });
+
 		var dia = new Vue({
         el: '#dia',
         data:{
+            content:'',
         	friends:'',
-        	page:'',
-        	content:'',
         	opfriendId:'',
         	opfriendName:'',
-        	dialogues:'',
         	opfriend:'',
-            editor:''
+            page:{},
+            pageCodes:[],
+            editor:{}
         },
         ready:function(){
-        	this.getUsers();
-            var editor = new wangEditor('text');
+        	this.getUsers();  
+             var editor = new wangEditor('text');
             editor.config.menuFixed = false;
             editor.config.uploadImgUrl = '/api/upload';
             editor.config.uploadImgFileName='dialoguePhoto';
@@ -48,50 +87,55 @@
                 this.editor=editor;
         },
         methods: {
-            getUsers: function () {
+            gotoPage:function(pageCode){
+            if(pageCode==this.page.page_index){
+                return;
+            }
+            this.getUsers(pageCode);
+        },
+        getPageCodes: function(index,count) {
+                    this.pageCodes=getPageCodes(index,count);
+            },
+            getUsers: function (page) {
                 that=this;
-                postJSON('/api/focus/users',{}, function (err, r) {
+                postJSON('/api/focus/users',{page:page}, function (err, r) {
                     if (!err) {
                     	that.friends=r.friends;
                     	that.page=r.page;
-                        that.getRecord(r.friends[0]);
+                        that.opfriend=r.friends[0];
+                        that.opfriendId=r.friends[0].id;
+                        that.opfriendName=r.friends[0].name;
+                        that.getPageCodes(r.page.page_index,r.page.page_count);
                     }
                 });
             },
+            turnfriend:function(friend){
+                this.opfriendId= friend.id;
+                this.opfriendName = friend.name;
+                this.opfriend = friend;
+                friend.newsnum=0;
+            },
             submit: function (event) {
                 event.preventDefault();
-                if(!this.opfriendId){
-                	return
-                }
-                var $form = $('#dia').find('form');
-                that=this;
+                var $form = $(event.target);
+
                 // 去除富文本尾部添加标签
-                 this.content = handleHtml(this.editor.$txt.html(),'<p><br></p>');
-                $form.postJSON('/api/dialogue/save',{content:that.content,friendId:that.opfriendId}, function (err, r) {
+                this.content = handleHtml(this.editor.$txt.html(),'<p><br></p>').trim();
+                
+                if(!this.content){
+                    this.$broadcast('parent-msg',1);
+                    return
+                }
+                that=this;
+                $form.postJSON('/api/dialogue/save',{content:that.content,friendId:that.opfriend.id}, function (err, r) {
                     if (!err) {
                         if(r.message){
-                        	// $('#text').val("");
                             that.editor.clear();
-                        	that.getRecord(that.opfriend);
+                            that.$broadcast('parent-msg',1);
                         }
                     }
 
                 });
-            },
-            getRecord: function(friend) {
-            		this.opfriendId= friend.id;
-            		this.opfriendName = friend.name;
-            		this.opfriend = friend;
-            		that=this;
-            		postJSON('/api/dialogue/get',{friendId:friend.id},function(err,r){
-                        if (err) {showInfo(err)}
-                     
-                        else {
-                            that.dialogues=r.dialogues;
-                            that.page=r.page
-                        }
-            				
-            		});
             }
         }
     });
@@ -102,32 +146,44 @@
 
 {% block content %}
 <div id="dia" class="dialogueall">
+<template id="onedialogue">
 
-<div class="getandsendbox">
-   <div class="contentbox">
-            <div v-for="dialogue in dialogues" :class="dialogue.from_user_id!='{{__user__.id}}'?'otherwordbox':'mywordbox'">
+ <div class="contentbox">
+
+
+                  <div v-for="dialogue in dialogues" :class="dialogue.from_user_id!='{{__user__.id}}'?'otherwordbox':'mywordbox'" track-by="id">
             <div :class="dialogue.from_user_id!='{{__user__.id}}'?'otherwordsandname':'mywordsandname'">
-                <div class="othername" v-if="dialogue.from_user_id!='{{__user__.id}}'"><a :href="'/user/'+opfriend.name"><img class="round" width="50" height="50" :src="opfriend.image"></a></div>
-                <div class="myname" v-if="dialogue.from_user_id=='{{__user__.id}}'"><a href="/user/{{__user__.name}}"><img class="uk-comment-avatar uk-border-circle" width="50" height="50" src="{{ __user__.image }}"></a></div>
+                <div class="othername" v-if="dialogue.from_user_id!='{{__user__.id}}'"><a :href="'/user/'+friend.name"><img class="round" width="50" height="50" :src="friend.image"></a></div>
+                <div class="myname" v-if="dialogue.from_user_id=='{{__user__.id}}'"><a href="/user/{{__user__.name}}"><img class="round" width="50" height="50" src="{{ __user__.image }}"></a></div>
                 <div :class="dialogue.from_user_id!='{{__user__.id}}'?'otherwords':'mywords'" v-html="dialogue.content"></div>
                 
             </div>
             <div class="diatime" v-text="dialogue.created_at.toDateTime()"></div>
             </div>
-    </div>          
-            <form v-on:submit="submit" class="sendform">
-            <textarea id="text" row="2" v-model="content" name="content" placeholder="请输入发送信息" class="sendtext">  
-            </textarea>
-            <button type="submit" id="send" class="sentbutton"><i class="fa fa-send"></i></button> 
-            </form> 
+             <div v-on:click="loadmore" v-if="page.page_count&&page.page_index!=page.page_count" class="loadmore">加载更多</div>
+  </div>  
 
-</div>
-	
-        
+</template>
+<div class="getandsendbox">
+   <dialogue :friend="friend" v-if="opfriendId==friend.id" v-for="friend in friends" keep-alive>
+   </dialogue>
+
+    <form v-on:submit="submit" class="sendform">
+    <textarea id="text" row="2" v-model="content" name="cplaceholder="请输入发送信息" class="sendtext">  
+    </textarea>
+    <button type="submit" id="send" class="sentbutton"><i class="fa fa-send"></i></button> 
+    </form> 
+
+</div>               
 <div class="opobj">
 	<ul>
-		<li v-for="friend in friends"><a :class="friend.id==opfriendId?'active':''" href="javascript:void(0);" v-on:click="getRecord(friend)" v-text="friend.name"></a></li>
+		<li v-for="friend in friends"><a :class="friend.id==opfriendId?'active':''" href="javascript:void(0);" v-on:click="turnfriend(friend)" v-text="friend.name"></a><i v-if="friend.newsnum" class="fa fa-circle"><span v-text="friend.newsnum"></span></i></li>
 	</ul>
+   <ul class="pagination pagination4">
+            <li v-for="pageCode in pageCodes"><a :class="pageCode==page.page_index?'active':''" href="javascript:void(0)" v-on:click="gotoPage(pageCode)" v-text="pageCode"></a></li>
+    </ul>
+ 
 </div>
+
 </div>
 {% endblock %}
