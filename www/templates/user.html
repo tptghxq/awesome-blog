@@ -129,7 +129,8 @@ var tags =new Vue({
     ,
     methods:{
         deletetag:function(tag){
-            that=this;
+            if(confirm('确定要删除整个标签 “'+tag.name+'”?')){
+                            that=this;
             getJSON('/api/{{user.name}}/tag/'+tag.name+'/delete',function(err,r){
                 if(err){
                     showInfo(err)
@@ -139,6 +140,8 @@ var tags =new Vue({
                         that.tagnum--;
                     }
             });
+            }
+
         }
     }
 });

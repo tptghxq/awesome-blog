@@ -12,7 +12,7 @@ html,body {
 * {
     margin: 0;
     padding: 0;
-    font-family: 'Georgia',"lucida grande", "lucida sans unicode", lucida, helvetica, "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑","WenQuanYi Micro Hei", sans-serif;
+    font-family: 'Cambria','Georgia',"lucida grande", "lucida sans unicode", lucida, helvetica, "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑","WenQuanYi Micro Hei", sans-serif;
     outline: none;
 }
 ul{
@@ -612,8 +612,10 @@ ul{
   width: 100%;
   border-bottom: 3px solid #2b2b2b;
   font-size: 17px;
-  overflow: auto;
+
   padding-top: 50px;
+
+  overflow-y:auto;
 }
 
 
@@ -629,16 +631,35 @@ ul{
   margin: 0 2em;
   position: relative;
   padding: 0.5em 1em;
-  background-color: #fafefc;
-  color: #666666;
+  background-color: #fff;
+  color: #555;
   border-radius: 1em;
   min-width: 50px;
   text-align: center;
 }
+.mywords:after {
+  content: "";
+  display: block; /* reduce the damage in FF3.0 */
+  position: absolute;
+  top: 8px;
+  right: -15px;
+  bottom: auto;
+  left: auto;
+  border-width: 15px 0 0 20px;
+  border-style: solid;
+  border-color: transparent #fff;
+}
+
+.mywords p{
+  margin:0;
+}
+.otherwords p{
+  margin:0;
+}
 .otherwords{
   border-radius: 1em;
-  color: #666666;
-  background-color: #fafefc;
+  color: #555;
+  background-color: #fff;
   padding: 0.5em 1em;
   font-size: 14px;
   word-wrap:break-word; 
@@ -649,20 +670,32 @@ ul{
     min-width: 50px;
   text-align: center;
 }
+.otherwords:after {
+  content: "";
+  display: block; /* reduce the damage in FF3.0 */
+  position: absolute;
+  top: 8px;
+  left: -15px;
+  bottom: auto;
+  right: auto;
+  border-width: 15px 20px 0 0;
+  border-style: solid;
+  border-color: transparent #fff;
+}
 .myname{
  /* padding: 2px 5px;*/
   font-size: 20px;
-/*
-  border: 0.1em solid #00A5E2;
-  border-radius: 0 25% 0 25%;*/
+    width: 50px;
+  height:50px;
+  flex-shrink: 0;
 }
 .othername{
-/*  padding: 2px 5px;*/
+
   font-size: 20px;
   color: #fff;
-/*
-  border: 0.1em solid #00A5E2;
-  border-radius: 0 25% 0 25% ;*/
+  width: 50px;
+  height:50px;
+ flex-shrink: 0;
 }
 
 .shuru {
@@ -819,15 +852,15 @@ background: #f1f1f1;
   cursor: pointer;
   position: relative;
   background: none;
-  color: rgba(232,16,16,0.8);
+  color: #E22D40;
   padding: 5px 5px;
-  border: 2px solid #a43424; 
+  border: 2px solid #E22D40 ;
   border-radius:50px;
   width: 100px;
 }
 .dobutton:hover{
   color: #fff;
-  background-color: #a43424;
+  background-color: #E22D40;
 }
 .undobutton{
   font-size: 13px;
@@ -835,7 +868,7 @@ background: #f1f1f1;
   text-align: center;
   cursor: pointer;
   position: relative;
-  background: rgba(232,16,16,0.8);
+  background: #E22D40;
   color: #fff;
   padding: 5px 5px;
   border: 2px solid rgba(232,16,16,0.8); 
@@ -843,7 +876,7 @@ background: #f1f1f1;
   width: 100px;
 }
 .undobutton:hover{
-  color: rgba(232,16,16,0.8);
+  color: #E22D40;
   background: none;
 }
 .addbutton{
@@ -905,7 +938,7 @@ margin-top: 3rem;
   flex-wrap: wrap;
 }
 .pagination li a{
-border: 2px solid #fbfbfb;
+border: 1px solid #fbfbfb;
 border-radius: 0;
 padding: 5px 10px;
 margin:0 0.3em; 
@@ -917,7 +950,7 @@ background-color: none;
   color: #191919;
 }
 .pagination li a.active{
-    background-color: rgba(255,255,255,0.6);
+    background-color: #fff;
   color: #191919;
 }
 .pagination3{
@@ -952,7 +985,7 @@ justify-content: center;
  z-index: 9999;
 }
 .pagination2 li a{
-border: 2px solid #fefefe;
+border: 1px solid #fefefe;
 border-radius: 0;
 padding: 5px 10px;
 margin:1em 0.3em; 
@@ -969,13 +1002,13 @@ background-color: none;
 }
 .pagination5{
   position: relative;
-  margin-top: 100px;
+  margin-top: 50px;
   display: flex;
   justify-content: center;
  z-index: 9999;
 }
 .pagination5 a{
-border: 2px solid #131313;
+border: 1px solid #131313;
 border-radius: 0;
 padding: 5px 10px;
 margin:1em 0.3em; 
@@ -987,7 +1020,7 @@ background-color: none;
   color: #fff;
 }
 .pagination5 li a.active{
-  background-color: #191919;
+  background-color: #111;
   color: #fff;
 }
 .editcontainer{
@@ -1767,6 +1800,7 @@ display: block;
 }
 .bookmark li{
   margin-bottom: 1em;
+  display: flex;
 }
 .fa-bookmark{
   margin-right: 10px;

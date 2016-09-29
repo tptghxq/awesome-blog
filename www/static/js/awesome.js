@@ -521,15 +521,13 @@ function showInfo(info,op) {
     $('.alert_bg').fadeIn(300);
     msg=info.message ? info.message : (info.error ? info.error : info);
     if (!op) {
-        $('.alert_con').css({"color":"#871724"});
-        opText="出错："
+        $('.alert_con').css({"color":"#E22D40"});
 
 };
     if(op) {
             $('.alert_con').css({"color":"#FCD000"});
-        opText="提示："
     }
-    $('.alert_con').text(opText+msg);
+    $('.alert_con').text(msg);
     $('.confirm_con').slideDown(200);
     $('.alert_bg').click(function(){
         $('body').css({overflow: "visible"});
@@ -537,21 +535,6 @@ function showInfo(info,op) {
         $('.alert_bg').fadeOut(100);
     });
 }
-
-        function getNewsNum(){
-            that=this;
-            postJSON('/api/getnewsnum',function(err,r){
-                if(err){
-                    showInfo(err);
-                }
-                    else if(r.newsNum>0){
-                            that.newsNum=r.newsNum;
-                            alert(r.newsNum);
-
-                    }
-            })
-        }
-
         function getPageCodes(index,count) {
                 pageCodes=[];
                 pageCodes.push(index);
@@ -641,3 +624,13 @@ var uuid = 'xxxxxxxyxxxxx'.replace(/[xy]/g, function(c) {
 });
 return uuid;
 };
+
+function formatLimit(formatName){
+      formatNames=['jpg','png','gif','jpeg']
+    for (i in formatNames){
+        if (formatNames[i] == formatName)
+            return true
+    }
+    return false
+}
+  

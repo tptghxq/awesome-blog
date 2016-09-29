@@ -16,7 +16,6 @@ function initVM(blog) {
         el: '#vm',
         data: {name:blog.name,summary:blog.summary,content:blog.content,image:blog.image,editor1:'',editor2:'',drop:0,tagname:'',tagnum:blog.tagnames.length,tagnames:blog.tagnames},
         ready:function(){
-
             var editor1 = new wangEditor('edit1');
             editor1.config.menuFixed = false;
             editor1.config.menus = [
@@ -52,6 +51,7 @@ function initVM(blog) {
 
     editor2.config.menuFixed = false;
     editor2.config.uploadImgUrl = '/api/upload';
+    editor2.config.hideLinkImg = true;
     editor2.config.uploadImgFileName='blogPhoto';
     editor2.config.menus = [
         'source',
@@ -150,8 +150,11 @@ function initVM(blog) {
             deletetag:function(tagname){
                 this.tagnum--;
                 this.tagnames.$remove(tagname);
+                if(this.tagnum<5){
+                    $('#tagtext').attr('disabled',false);
+                }
             },
-            addtag:function(){
+            addtag:function(event){
                 //在火狐浏览器下第一次加标签特别慢，不懂
                 if(this.tagname.length<2){
                     return showInfo("最少要输入2个字符",1);
@@ -167,7 +170,10 @@ function initVM(blog) {
                 };
                 this.tagnum++;
                 this.tagnames.push(this.tagname.trim());
-                if(this.tagnames.length>5){
+                if(this.tagnum>=5){
+                    $(event.target).attr('disabled',true);
+                }
+                if(this.tagnum>5){
                     this.tagnames=this.tagnames.slice(0,5);
 
                 }

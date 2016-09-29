@@ -65,6 +65,13 @@ def cropImage(fpath,tpath):
       newim.thumbnail(size)
     newim.save(tpath)
 
+def formatLimit(formatName):
+    formatNames=['jpg','png','gif','jpeg']
+    for name in formatNames:
+        if name == formatName:
+            return True
+    return False
+
 def check_admin(request):
     if request.__user__ is None or not request.__user__.admin:
         raise APIPermissionError('no Permission')
@@ -185,9 +192,14 @@ def getDialugue(request,*,friendId,op,page='1'):
         raise APIPermissionError("请登录")
     if op == 1:
         where= 'from_user_id in (?,?) and to_user_id in (?,?)'
+        ids=[user.id,friendId,user.id,friendId]
     if op == 2:
         where= 'news=1 and from_user_id in (?,?) and to_user_id in (?,?)'
-    ids=[user.id,friendId,user.id,friendId]
+        ids=[user.id,friendId,user.id,friendId]
+    if op == 3:
+        where= 'news=1 and from_user_id = ? and to_user_id = ?'
+        ids=[friendId,user.id]
+    
     obj = yield from getobjectbypage(Conversation,where=where,args=ids,page=page)
     dialogues=obj['items']
     for dialogue in dialogues:
@@ -224,8 +236,11 @@ def savephoto(request):
         if iofile is None:
             raise APIError('上传失败')
         filename= data[currentName].filename
+        formatName = filename[filename.find('.')+1:]
+        if not formatLimit(formatName):
+            raise APIValueError('请选择jpg,jpeg,png,gif格式的图片')   
         if currentName == 'headIcon':
-            newFileName = user.id+filename[filename.find('.'):]
+            newFileName = user.id+filename[filename.find('.'):]  
             user.image='/static/img/'+newFileName
             yield from user.update()
         else:
@@ -290,7 +305,10 @@ def getlikeblogs(request,*,page='1'):
         raise APIPermissionError("请登录")
     appreciates = yield from Appreciate.findAll('user_id=?',fromuser.id)
     if len(appreciates) == 0:
-        raise APIResourceNotFoundError('你没有喜欢的博文')
+        return {
+          'blogs':[],
+        'page': Page(0,1)  
+        }
     blog_ids = [appreciate.blog_id for appreciate in appreciates]
     where='id in ('+','.join(len(blog_ids)*'?')+')'
     obj = yield from getobjectbypage(Blog,where=where,args=blog_ids,page=page)

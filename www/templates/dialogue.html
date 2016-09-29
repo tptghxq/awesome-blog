@@ -4,7 +4,10 @@
 
 {% block beforehead %}
 <script>
+
 	$(function(){
+
+            $('.sendform').hide();
                   Vue.component('dialogue',{
                     data:function(){
                         return {dialogues:[],page:{},diaslength:0,newslength:0}
@@ -13,13 +16,13 @@
                     template:'#onedialogue',
                     events:{
                         'parent-msg':function(msg){
-                              this.getMessage(2);
-
+                            this.getMessage(3);
                         }
                     },
                     ready:function(){
                         this.getMessage(1);
                         this.pollmessage();
+                        $('.sendform').show();
                     },
                     methods:{
                     pollmessage:function(){
@@ -27,7 +30,7 @@
                         t=10000/(1+this.newslength);
                         this.diaslength=this.dialogues.length;
                         setTimeout(function(){
-                            that.getMessage(2);
+                            that.getMessage(3);
                             that.newslength=that.dialogues.length-that.diaslength;
                             that.diaslength=that.dialogues.length;
                             that.pollmessage();
@@ -43,7 +46,7 @@
                                 that.dialogues=that.dialogues.concat(r.dialogues); 
                                 that.page=r.page;
                             }
-                            else if(op==2){
+                            else if(op==2 || op==3){
                                 that.dialogues=r.dialogues.concat(that.dialogues);
                             }
                             
